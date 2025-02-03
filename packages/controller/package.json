@@ -1,0 +1,18 @@
+{
+    "name": "@repo/controller",
+    "type": "module",
+    "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc"
+    },
+    "dependencies": {
+    "@repo/fetch": "*",
+    "@repo/db": "*",
+    "@repo/model": "*"
+    },
+    "devDependencies": {
+    "typescript": "^5.0.0",
+    "@repo/typescript-config": "*",
+    "tsx": "^4.7.0"
+    }
+}
