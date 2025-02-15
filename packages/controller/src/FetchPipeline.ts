@@ -7,10 +7,6 @@ import NeoAccessor from "@repo/db/neo"
 
 
 
-type CastedPapers = {
-    referencingPaper: Paper;
-    referencedPapers: Paper[];
-}
 
 export default class FetchPipeline {
 
@@ -35,17 +31,16 @@ export default class FetchPipeline {
         const pdf:string = await PaperExtracter.extractMetaData(link);
         let info: paperInfo = await extractInformation(pdf);
         info.arxiv = arxivID // just give arxiv yourself for safety
-        const castedPapers: CastedPapers = await this.castToPapers(info)
+        const [srcPaper, referencedPapers]= await this.castToPapers(info)
 
 
         // TableAccessor.pushPapers(papers)
-        if (castedPapers.referencingPaper) NeoAccessor.pushExtraction(castedPapers.referencingPaper,castedPapers.referencedPapers) //async 
-        console.log("Returning")
-        return castedPapers.referencedPapers
-    
+        if (srcPaper) NeoAccessor.pushExtraction(srcPaper,referencedPapers) //async 
+        console.log("Returning") 
+        return referencedPapers
     }
 
-    private static async castToPapers(info: paperInfo): Promise<CastedPapers> {
+    private static async castToPapers(info: paperInfo): Promise<[Paper,Paper[]]> {
         // used to turn Gemini output to distinct papers to be passed for model extraction.
         const srcPaper = await this.fetchPaperDetails(info);
 
@@ -57,11 +52,7 @@ export default class FetchPipeline {
 
         const referencedPapers = await Promise.all(references.map(ref => this.fetchPaperDetails(ref)));
 
-        const res: CastedPapers = {
-            referencingPaper: srcPaper,
-            referencedPapers: referencedPapers
-        }
-        return res
+        return [srcPaper,referencedPapers]
     }
 
     private static async fetchPaperDetails(p: paperInfo | reference): Promise<Paper> {
