@@ -1,18 +1,30 @@
-// import { logger, task, wait } from "@trigger.dev/sdk/v3";
 
-// export const helloWorldTask = task({
-//   id: "hello-world",
-//   // Set an optional maxDuration to prevent tasks from running indefinitely
-//   maxDuration: "5s", // Stop executing after 300 secs (5 mins) of compute
-//   run: async (payload: any, { ctx }) => {
-//     logger.log("Hello, world!", { payload, ctx });
+// import { extractReferencesFromPDF } from "@repo/fetch/src/pdfExtracter.js";
+import {fetchPaperPDFLink, getReferencedCount} from "@repo/fetch/src/urlFetcher.js" 
 
-//     await wait.for({ seconds: 5 });
+import { logger, task, tasks } from "@trigger.dev/sdk/v3";
 
-//     return {
-//       message: "Hello, world!",
-//     }
-//   },
-// });
+// console.log( process.env.TRIGGER_API_KEY)
 
-// what
+
+
+export const fetchPaper = task({
+  id: "fetch-paper",
+  maxDuration: 5000,
+  run: async (payload: { arxivId: string }) => {
+    logger.info("Starting paper fetch", { arxivId: payload.arxivId });
+    
+    try {
+      const papers = await fetchPaperPDFLink(payload.arxivId);
+      logger.info("Paper fetch complete", { link: papers });
+      return papers;
+    } catch (error) {
+      logger.error("Paper fetch failed", { error });
+      throw error;
+    }
+  },
+});
+
+
+
+// const res = await fetchPaper.trigger({arxivId:"1706.03762"})

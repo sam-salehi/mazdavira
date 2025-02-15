@@ -4,22 +4,25 @@ import { parseStringPromise } from 'xml2js';
 
 
 
-export async function fetchPaperPDFLink(arxiv: string|undefined): Promise<string|null>{
+export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
   // adapt to work with doi and title if arxiv is not available.
-  if (arxiv) return ArxivAPI.fetchPaper(arxiv)
-  return null
+  return ArxivAPI.fetchPaper(arxiv)
+}
+export async function  getReferencedCount(arxiv:string): Promise<number | null> {
+  return ArxivAPI.getReferencedCount(arxiv)
 }
 
 
-export async function  getReferencedCount(arxiv:string|undefined, doi:string|undefined,title:string): Promise<number | null> {
-  if (arxiv) return ArxivAPI.getReferencedCount(arxiv)
-    return null
-}
+
+// fetch ARXIV pdf link:
+
 
 class ArxivAPI {  
   // Arxiv related API's
     public static async fetchPaper(arxivId: string): Promise<string | null> {
       // returns paper pdf given ArxivId
+      console.log("Arxivid")
+      console.log(arxivId)
       const ARXIV_API = `http://export.arxiv.org/api/query?id_list=${encodeURIComponent(arxivId)}`;
       try {
           const response = await axios.get<any>(ARXIV_API);
@@ -29,11 +32,13 @@ class ArxivAPI {
           return link
       } catch (error) {
           console.error(`Error fetching paper URL from ArXiv for ${arxivId}:`, error);
-          return null
+          throw error
       }
   }
 
   public static async getReferencedCount(arxiv: string): Promise<number> {
+    return  0
+    // FIXME: have to do something with the rate limit before we return whats happening
     const CROSSREF_API = `https://api.semanticscholar.org/graph/v1/paper/arXiv:${arxiv}?fields=citationCount`;
     try {
         const response = await axios.get(CROSSREF_API);

@@ -16,8 +16,9 @@ function mapReferences(refs: any[]): reference[] {
     }));
 }
 // Main function to extract information
-export async function extractInformation(paper: string): Promise<paperInfo | null> {
+export async function extractInformation(paper: string): Promise<paperInfo> {
     const generatedPrompt = EXTRACTING_REFERENCES_PROMPT.replace("{paper}", paper);
+    let paperInfoObject: paperInfo;
     try {
         const { object } = await generateObject({
             model: geminiModel('gemini-2.0-flash-exp'),
@@ -39,8 +40,8 @@ export async function extractInformation(paper: string): Promise<paperInfo | nul
 
         return paperInfoObject; // Return the constructed object
     } catch (error) {
-        console.error("Issue extracting information from paper:", error);
-        return null
+        console.error("Issue extracting information from paper:");
+        throw error
     }
 }
 

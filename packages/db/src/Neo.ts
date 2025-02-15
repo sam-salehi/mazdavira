@@ -3,6 +3,8 @@ import driver from "../../db/src/config.js";
 import { type Paper } from "./convert.js";
 
 const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
+// 
+
 
 export default class NeoAccessor {
     public static async getPaper(title: string): Promise<Paper | undefined>{
@@ -20,6 +22,7 @@ export default class NeoAccessor {
             if (node) nodePaper = NeoAccessor.convertToPaper(node)
         } catch (error) {
             console.error(`Issue getting paper with title ${title}`, error)
+            throw error
         } finally {
             session.close()
             return nodePaper
@@ -61,6 +64,7 @@ export default class NeoAccessor {
             result.records.forEach((res) => referencedPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
         } catch (error) {
             console.error(`Issue fetching neighbours of paper ${title}: `,error)
+            throw error
         } finally {
             session.close()
             return referencedPapers
@@ -82,6 +86,7 @@ export default class NeoAccessor {
             result.records.forEach((res) => referencingPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
         } catch (error) {
             console.error(`Issue fetching neighbours of paper ${title}: `,error)
+            throw error
         } finally {
             session.close()
             return referencingPapers
@@ -95,38 +100,99 @@ export default class NeoAccessor {
 
     public static async pushExtraction(paper: Paper, references: Paper[]): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
-        const session = driver.session()
-        // just make paper with given name.
-        const QUERY = `MERGE (p:${this.generatePaperQuery(paper)})\nRETURN p`
-        console.log("References count: ", references.length)
+        let paperID:number;
+        if (await NeoAccessor.paperExists(paper)) { //FIXME: possibly issue with getting paperID when paper exists. Could just pass arxiv, but paperID seems like a more specific oslution
+            console.log("Paper exists")
+            paperID = await NeoAccessor.updatePaper(paper)
+        } else {
+            console.log("Paper does not exist")
+            paperID = await NeoAccessor.createPaper(paper)
+        }
+        await Promise.allSettled(references.map(r => this.pushReference(paperID,r)))
+    }
 
+
+    public static async createPaper(paper:Paper): Promise<number> {
+        const session = driver.session()
+        const QUERY =  `CREATE (p:${this.generatePaperQuery(paper)})\nRETURN p`
         try {
             const res = await session.run(
                 QUERY,paper
             )
             const paperID: number = res.records[0]?.get("p").identity
-            session.close()
-            await Promise.allSettled(references.map(r => this.pushReference(paperID,r)))
+            return paperID
         } catch (error) {
-            console.error("Error merging papers: ", error)
+            console.error("Issue creating paper")
+            throw error
+        } finally {
             session.close()
-        } 
+        }
     }
+
+
+    public static async updatePaper(paper:Paper): Promise<number> {
+        // assuming that paper exists 
+        const session = driver.session()
+        const QUERY = `
+            MATCH (p:Paper {title: $title, arxiv: $arxiv})
+            SET p += $properties
+            RETURN p
+        `
+
+        try {
+            const res = await session.run(
+                QUERY,
+                {title:paper.title,arxiv:paper.arxiv,properties:paper}
+            )
+            const paperID: number = res.records[0]?.get("p").identity
+            return paperID
+        } catch (error) {
+            console.error(`Issue updating paper with title: ${paper.title}`)
+            throw error
+        } finally {
+            session.close()
+        }
+    }
+
     private static async pushReference(paperid: Number, reference: Paper): Promise<void> {
         
         const session = driver.session() // sessions are not thread-aware
+        const QUERY = `
+        MATCH (p)
+        where id(p) = $paperId
+        MERGE (p)-[:REFERENCED]->(:${this.generatePaperQuery(reference)})
+        `
         try {
-            const QUERY = `
-            MATCH (p)
-            where id(p) = $paperId
-            MERGE (p)-[:REFERENCED]->(:${this.generatePaperQuery(reference)})
-            `
             const res = await session.run(
                 QUERY,
                 {paperId: paperid, ...reference}
             )
         } catch (error) {
-            console.error("Issue pushing References paper", error)
+            console.error("Issue pushing References paper",error)
+            throw error
+        } finally {
+            session.close()
+        }
+    }
+
+
+    private static async paperExists(paper: Paper): Promise<boolean> {
+        // check to see if type Paper with title and arxivID exists
+        console.log("Paper details: ")
+        console.log(paper.title)
+        console.log(paper.arxiv)    
+        const session = driver.session()
+        const checkQuery = ` MATCH (p:Paper {arxiv:$arxiv}) return p`
+        try {
+            const res = await session.run(
+                checkQuery,
+                {arxiv: paper.arxiv}
+            )
+            console.log("Paper length: ", res.records.length)
+            return res.records.length > 0;
+        } catch (error) {
+            console.error(`Issue checking wether paper with title ${paper.title} exists.`)
+            throw error
         } finally {
             session.close()
         }

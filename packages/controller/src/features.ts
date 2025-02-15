@@ -19,7 +19,8 @@ export default class Features {
 
 
     public static async findConnectionWithQuestion(title1: string, title2: string, userQuestion: string): Promise<string> {
-         // REQURIES: title1 and title2 to exist in the database
+        // fetches the papers with the given titles and finds how they are related. Answers user question based on finding.
+        // REQURIES: title1 and title2 to exist in the databases and have a connection
         // TODO:
 
         // fetch urls for title from db
