@@ -2,8 +2,8 @@ import { Session } from "neo4j-driver";
 import driver from "../../db/src/config.js";
 import { type Paper } from "./convert.js";
 
-const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
-// 
+// const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
+
 
 
 export default class NeoAccessor {
@@ -14,7 +14,7 @@ export default class NeoAccessor {
             RETURN p
             LIMIT 1
             `
-        const session = driver.session()
+        const session = driver.session();
         let nodePaper;
         try {
             const result = await session.run(QUERY,{arxiv:arxiv})

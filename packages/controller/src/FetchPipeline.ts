@@ -2,13 +2,11 @@ import {type paperInfo, type reference} from "@repo/model/src/config.js"
 import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import { PaperExtracter } from "@repo/fetch/src/pdfExtracter.js"
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
-import { Paper, TableAccessor } from "@repo/db/convert"
+import { Paper } from "@repo/db/convert"
 import NeoAccessor from "@repo/db/neo"
 import Semaphore from "./semaphore.js"
 import { timeout } from "@trigger.dev/sdk/v3"
 // eidos/packages/controller/src/FetchPipeline.ts
-
-
 
 
 const LLMSemaphore = new Semaphore(3) // seems reasonable for llm response.

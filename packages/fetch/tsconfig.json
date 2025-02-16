@@ -15,8 +15,7 @@
   "include": [
     "src/urlFetcher.ts",
     "src",
-    ".next/types/**/*.ts"
-, "../controller/src/semaphore.ts"  ],
+    ".next/types/**/*.ts" ],
   "exclude": [
     "node_modules",
     "dist"

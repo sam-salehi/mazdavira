@@ -3,20 +3,10 @@ import NeoAccessor from "@repo/db/neo"
 import {PaperExtracter} from "@repo/fetch/src/pdfExtracter.js"
 import { generateConnectionDetails } from "@repo/model/src/referanceExtraction.js"
 
-
-
-
-
-
-
 export default class Features {
-
-
-
     public static async findConnection(title1:string, title2:string): Promise<string> {
         return await this.findConnectionWithQuestion(title1,title2,"")
     }
-
 
     public static async findConnectionWithQuestion(title1: string, title2: string, userQuestion: string): Promise<string> {
         // fetches the papers with the given titles and finds how they are related. Answers user question based on finding.
@@ -36,6 +26,4 @@ export default class Features {
         const response:string = await generateConnectionDetails(pdf1,pdf2,userQuestion)
         return response
     }
-
-
 }
