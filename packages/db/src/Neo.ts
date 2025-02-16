@@ -49,7 +49,7 @@ export default class NeoAccessor {
         }
     }
 
-    public static async getReferences(title: string) : Promise<Paper[]> {
+    public static async getReferences(title: string) : Promise<Paper[]> { //TODO: getReferences based on arxivID instead
         // returns all neighbours to referenced by given title. 
         // Returns empty list if paper not found
         const session = driver.session()
@@ -71,7 +71,7 @@ export default class NeoAccessor {
         }
     }
 
-    public static async getReferencing(title: string) : Promise<Paper[]> {
+    public static async getReferencing(title: string) : Promise<Paper[]> { //TODO: getReferencing based on ARxiv ID instead
         // Returns all nodes that are referencing the node with given title.
         // returns empty list if paper not found
         const session = driver.session()
@@ -101,7 +101,7 @@ export default class NeoAccessor {
     public static async pushExtraction(paper: Paper, references: Paper[]): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
         let paperID:number;
-        if (await NeoAccessor.paperExists(paper)) { //FIXME: possibly issue with getting paperID when paper exists. Could just pass arxiv, but paperID seems like a more specific oslution
+        if (await NeoAccessor.paperExists(paper)) { //FIXME: possibly issue with getting paperID when paper exists. Could just pass arxiv, but paperID seems like a more specific solution
             console.log("Paper exists")
             paperID = await NeoAccessor.updatePaper(paper)
         } else {
@@ -134,7 +134,7 @@ export default class NeoAccessor {
         // assuming that paper exists 
         const session = driver.session()
         const QUERY = `
-            MATCH (p:Paper {title: $title, arxiv: $arxiv})
+            MATCH (p:Paper {arxiv: $arxiv})
             SET p += $properties
             RETURN p
         `
@@ -160,7 +160,8 @@ export default class NeoAccessor {
         const QUERY = `
         MATCH (p)
         where id(p) = $paperId
-        MERGE (p)-[:REFERENCED]->(:${this.generatePaperQuery(reference)})
+        MERGE (ref: Paper{arxiv:$arxiv}) ON CREATE SET ref += ${this.generatePaperQuery(reference).replace("Paper ","")}
+        MERGE (p)-[:REFERENCED]->(ref)
         `
         try {
             const res = await session.run(
@@ -168,6 +169,9 @@ export default class NeoAccessor {
                 {paperId: paperid, ...reference}
             )
         } catch (error) {
+            console.log(paperid)
+            console.log(reference)
+            console.log(this.generatePaperQuery(reference))
             console.error("Issue pushing References paper",error)
             throw error
         } finally {
@@ -178,9 +182,6 @@ export default class NeoAccessor {
 
     private static async paperExists(paper: Paper): Promise<boolean> {
         // check to see if type Paper with title and arxivID exists
-        console.log("Paper details: ")
-        console.log(paper.title)
-        console.log(paper.arxiv)    
         const session = driver.session()
         const checkQuery = ` MATCH (p:Paper {arxiv:$arxiv}) return p`
         try {
@@ -188,7 +189,6 @@ export default class NeoAccessor {
                 checkQuery,
                 {arxiv: paper.arxiv}
             )
-            console.log("Paper length: ", res.records.length)
             return res.records.length > 0;
         } catch (error) {
             console.error(`Issue checking wether paper with title ${paper.title} exists.`)

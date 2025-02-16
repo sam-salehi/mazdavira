@@ -15,7 +15,7 @@ export default class FetchPipeline {
         // REQUIRES: depth >= 0,  
         // arxivID is the id for the root )
         if (!arxivID || depth === 0) return
-        if (depth < 0) throw new Error(`Expect depth to be non-negative, got ${depth}`)
+        if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
         const extractedPapers: Paper[] = await this.extractPaper(arxivID)
         console.log("Extracted local paper")
         extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1))

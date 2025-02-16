@@ -15,5 +15,5 @@ import { logger, task, tasks } from "@trigger.dev/sdk/v3";
 
 
 
-const res = await FetchPipeline.extractPaper('1605.02688')
+const res = await FetchPipeline.extractPaperWithDepth('1412.1602',2)
 // console.log("Hello")
