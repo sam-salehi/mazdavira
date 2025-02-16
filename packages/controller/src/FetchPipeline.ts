@@ -1,12 +1,16 @@
 import {type paperInfo, type reference} from "@repo/model/src/config.js"
-import {fetchPaperPDFLink, getReferencedCount} from "@repo/fetch/src/urlFetcher.js" 
+import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import { PaperExtracter } from "@repo/fetch/src/pdfExtracter.js"
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
 import { Paper, TableAccessor } from "@repo/db/convert"
 import NeoAccessor from "@repo/db/neo"
+import Semaphore from "./semaphore.js"
+// eidos/packages/controller/src/FetchPipeline.ts
 
 
 
+
+const LLMSemaphore = new Semaphore(5)
 
 export default class FetchPipeline {
 
@@ -24,15 +28,17 @@ export default class FetchPipeline {
 
     public static async extractPaper(arxivID: string): Promise<Paper[]> {
         // get llm to extract information about paper
+
         console.log("Called")
         if (!arxivID) return [];
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
         const pdf:string = await PaperExtracter.extractMetaData(link);
+        await LLMSemaphore.acquire();
         let info: paperInfo = await extractInformation(pdf);
         info.arxiv = arxivID // just give arxiv yourself for safety
         const [srcPaper, referencedPapers]= await this.castToPapers(info)
-
+        LLMSemaphore.release();
 
         // TableAccessor.pushPapers(papers)
         if (srcPaper) NeoAccessor.pushExtraction(srcPaper,referencedPapers) //async 
@@ -60,7 +66,8 @@ export default class FetchPipeline {
 
         const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([
             getReferencedCount(p.arxiv || ""),
-            fetchPaperPDFLink(p.arxiv || "")
+            fetchPaperPDFLink(p.arxiv || ""),
+            !p.arxiv? fetchArxivID(p.title): p.arxiv
         ]);
 
         const refCount: number | null = refCountResult.status === 'fulfilled' ? refCountResult.value : null;

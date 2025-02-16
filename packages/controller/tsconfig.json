@@ -1,6 +1,6 @@
 {
   "extends": "@repo/typescript-config/base.json",
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/semaphore.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
     "outDir": "./dist",
