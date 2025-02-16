@@ -5,12 +5,13 @@ import {extractInformation} from "@repo/model/src/referanceExtraction.js"
 import { Paper, TableAccessor } from "@repo/db/convert"
 import NeoAccessor from "@repo/db/neo"
 import Semaphore from "./semaphore.js"
+import { timeout } from "@trigger.dev/sdk/v3"
 // eidos/packages/controller/src/FetchPipeline.ts
 
 
 
 
-const LLMSemaphore = new Semaphore(5)
+const LLMSemaphore = new Semaphore(3) // seems reasonable for llm response.
 
 export default class FetchPipeline {
 
@@ -22,27 +23,36 @@ export default class FetchPipeline {
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
         const extractedPapers: Paper[] = await this.extractPaper(arxivID)
         console.log("Extracted local paper")
-        extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1))
+        extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1)) // async
     }
 
 
     public static async extractPaper(arxivID: string): Promise<Paper[]> {
         // get llm to extract information about paper
-
-        console.log("Called")
         if (!arxivID) return [];
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
         const pdf:string = await PaperExtracter.extractMetaData(link);
         await LLMSemaphore.acquire();
-        let info: paperInfo = await extractInformation(pdf);
+        let info: paperInfo | undefined = undefined;
+
+        // timeout for exhaustion errors and try again after 5 seconds.
+        let errorCount = 0;
+        while (!info){
+            try {
+                info = await extractInformation(pdf);
+            } catch (error) {
+                errorCount += 1;
+                console.error(`Timeout error #${errorCount}: `, error)  
+                await new Promise(resolve => setTimeout(resolve,5000))
+            }   
+        }
         info.arxiv = arxivID // just give arxiv yourself for safety
         const [srcPaper, referencedPapers]= await this.castToPapers(info)
         LLMSemaphore.release();
 
         // TableAccessor.pushPapers(papers)
         if (srcPaper) NeoAccessor.pushExtraction(srcPaper,referencedPapers) //async 
-        console.log("Returning") 
         return referencedPapers
     }
 
@@ -52,18 +62,25 @@ export default class FetchPipeline {
 
         console.log("Number of references before filtering for arxiv papers: ",info.references.length)
         // filtering for reference papers that have arxivid's only.
-        const references: reference[] = info.references.filter(ref => ref.arxiv)
+        const references: reference[] = info.references.filter(ref => (ref.arxiv != undefined))
         console.log("Number after filtering: ", references.length)
 
 
         const referencedPapers = await Promise.all(references.map(ref => this.fetchPaperDetails(ref)));
-
         return [srcPaper,referencedPapers]
     }
 
     private static async fetchPaperDetails(p: paperInfo | reference): Promise<Paper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
 
+        // don't extract information about paper if already in db. Just take it out
+        if (p.arxiv) {
+            console.log("Returning found paper: ", p.arxiv)
+            const paper = await  NeoAccessor.getPaper(p.arxiv)
+            if (paper) return paper
+        }
+    
+    
         const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([
             getReferencedCount(p.arxiv || ""),
             fetchPaperPDFLink(p.arxiv || ""),

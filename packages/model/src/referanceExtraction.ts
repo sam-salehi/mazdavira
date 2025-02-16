@@ -18,31 +18,25 @@ function mapReferences(refs: any[]): reference[] {
 // Main function to extract information
 export async function extractInformation(paper: string): Promise<paperInfo> {
     const generatedPrompt = EXTRACTING_REFERENCES_PROMPT.replace("{paper}", paper);
-    let paperInfoObject: paperInfo;
-    try {
-        const { object } = await generateObject({
-            model: geminiModel('gemini-2.0-flash-exp'),
-            schema: INFORMATION_EXTRACTION_SCHEMA,
-            prompt: generatedPrompt
-        });
+    const { object } = await generateObject({
+        model: geminiModel('gemini-2.0-flash-exp'),
+        schema: INFORMATION_EXTRACTION_SCHEMA,
+        prompt: generatedPrompt
+    });
 
-        // Construct the paperInfo object
-        const paperInfoObject: paperInfo = {
-            title: object.title,
-            authors: object.authors,
-            pub_year: object.pub_year,
-            referencing_count: object.referencing_count,
-            institutions: object.institutions,
-            references: mapReferences(object.references),
-            arxiv: PaperInfoFormatter.formatArxivID(object.arxiv),
-            doi: object.doi
-        };
+    // Construct the paperInfo object
+    const paperInfoObject: paperInfo = {
+        title: object.title,
+        authors: object.authors,
+        pub_year: object.pub_year,
+        referencing_count: object.referencing_count,
+        institutions: object.institutions,
+        references: mapReferences(object.references),
+        arxiv: PaperInfoFormatter.formatArxivID(object.arxiv),
+        doi: object.doi
+    };
 
-        return paperInfoObject; // Return the constructed object
-    } catch (error) {
-        console.error("Issue extracting information from paper:");
-        throw error
-    }
+    return paperInfoObject; // Return the constructed object
 }
 
 

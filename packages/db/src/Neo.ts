@@ -7,21 +7,21 @@ const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institu
 
 
 export default class NeoAccessor {
-    public static async getPaper(title: string): Promise<Paper | undefined>{
-        // gets paper with given title. If its not found, returns null
+    public static async getPaper(arxiv: string): Promise<Paper | undefined>{
+        // gets paper with given arxivdID. Returns null if none exists
         const QUERY = `
-            MATCH (p:Paper {title: $title})
+            MATCH (p:Paper {arxiv: $arxiv})
             RETURN p
             LIMIT 1
             `
         const session = driver.session()
         let nodePaper;
         try {
-            const result = await session.run(QUERY,{title:title})
+            const result = await session.run(QUERY,{arxiv:arxiv})
             const node = result.records[0]?.get('p').properties
             if (node) nodePaper = NeoAccessor.convertToPaper(node)
         } catch (error) {
-            console.error(`Issue getting paper with title ${title}`, error)
+            console.error(`Issue getting paper with arxiv id ${arxiv}`, error)
             throw error
         } finally {
             session.close()
@@ -101,8 +101,7 @@ export default class NeoAccessor {
     public static async pushExtraction(paper: Paper, references: Paper[]): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
         let paperID:number;
-        if (await NeoAccessor.paperExists(paper)) { //FIXME: possibly issue with getting paperID when paper exists. Could just pass arxiv, but paperID seems like a more specific solution
-            console.log("Paper exists")
+        if (await NeoAccessor.paperExists(paper.arxiv)) {
             paperID = await NeoAccessor.updatePaper(paper)
         } else {
             console.log("Paper does not exist")
@@ -155,7 +154,6 @@ export default class NeoAccessor {
     }
 
     private static async pushReference(paperid: Number, reference: Paper): Promise<void> {
-        
         const session = driver.session() // sessions are not thread-aware
         const QUERY = `
         MATCH (p)
@@ -180,18 +178,18 @@ export default class NeoAccessor {
     }
 
 
-    private static async paperExists(paper: Paper): Promise<boolean> {
-        // check to see if type Paper with title and arxivID exists
+    private static async paperExists(arxiv: string): Promise<boolean> {
+        // check to see if label Paper if arxivID exists.
         const session = driver.session()
         const checkQuery = ` MATCH (p:Paper {arxiv:$arxiv}) return p`
         try {
             const res = await session.run(
                 checkQuery,
-                {arxiv: paper.arxiv}
+                {arxiv: arxiv}
             )
             return res.records.length > 0;
         } catch (error) {
-            console.error(`Issue checking wether paper with title ${paper.title} exists.`)
+            console.error(`Issue checking wether paper with arxiv id ${arxiv} exists.`)
             throw error
         } finally {
             session.close()

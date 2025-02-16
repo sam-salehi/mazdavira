@@ -16,6 +16,7 @@ export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
 // const semaphore: Semaphore = new Semaphore(1)
 
 export async function  getReferencedCount(arxiv:string): Promise<number | null> {
+  return 0
   const referenceCount: number = await ArxivAPI.getReferencedCount(arxiv)
   return referenceCount
 }
@@ -113,14 +114,14 @@ class ArxivAPI {
 
     try {
         const proxyResponse = await axios.get(scholarUrl, {
-            // proxy: {
-            //     host: process.env.PROXY_HOST || '',
-            //     port: parseInt(process.env.PROXY_PORT || ''),
-            //     auth: {
-            //         username: process.env.PROXY_USERNAME || '',
-            //         password: process.env.PROXY_PASSWORD || ''
-            //     }
-            // },
+            proxy: { //TODO: figure out how to make proxy work 
+                host: "superproxy.zenrows.com",
+                port: parseInt("1337" || ''),
+                auth: {
+                    username: "3ZFxJsdY3NLb",
+                    password: "kwiMYIQeErGi"
+                }
+            },
             headers: {
                 'User-Agent': this.getRandomUserAgent(),
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',

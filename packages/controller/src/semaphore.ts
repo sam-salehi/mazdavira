@@ -11,7 +11,6 @@ export default class Semaphore {
         this.counter--;
         return;
       }
-  
       return new Promise<void>((resolve) => {
         this.tasks.push(resolve);
       });
