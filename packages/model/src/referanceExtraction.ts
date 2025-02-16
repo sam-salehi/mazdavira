@@ -1,6 +1,6 @@
 import { generateObject,generateText } from "ai";
 import { geminiModel } from "./config.js";
-import { EXTRACTING_REFERENCES_PROMPT, CONNECTION_GENERATION_PROMPT_WO_QUESTION,CONNECTION_GENERATION_PROMPT_W_QUESTION} from "./prompt.js";
+import { EXTRACTING_REFERENCES_PROMPT, CONNECTION_GENERATION_PROMPT_WO_QUESTION,CONNECTION_GENERATION_PROMPT_W_QUESTION,SUMMARY_GENERATION_PROMPT} from "./prompt.js";
 import { type reference, type paperInfo, INFORMATION_EXTRACTION_SCHEMA } from "./config.js";
 import PaperInfoFormatter from "./format.js"
 import { string } from "zod";
@@ -59,10 +59,14 @@ export async function generateConnectionDetails(referencingPaper: string, refere
 }
 
 
+export async function generateSummary(paper: string) {
+    const prompt: string = SUMMARY_GENERATION_PROMPT.replace("{paper}",paper)
 
+    const {text} = await generateText({
+        model: geminiModel('gemini-2.0-flash-exp'),
+        prompt: prompt
+    })
 
-
-
-
-
+    return text
+}
 

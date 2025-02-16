@@ -1,6 +1,16 @@
 
 
 
+
+export const SUMMARY_GENERATION_PROMPT = `You will be given a research paper's extracted pdf. Generate an abstract from this in a formal manner in one long paragraph. 
+    Summarize it in the order of goal, relevancy, strategies used and results.
+    <paper>
+    {paper}
+    </paper>
+`
+
+
+
 export const EXTRACTING_REFERENCES_PROMPT = `You will be given a research paper and be asked to extract the information setout below:
 title: the title of the paper
 authors: a list of authors of the paper
@@ -16,10 +26,6 @@ refrences: a list of objects, where each object is made some of the definitions 
 </paper>
 
 `
-
-
-
-
 
 const CONNECTION_GENERATION_PROMPT = `Look for the relevant citation inside the text but don't mention these excplicitly. State how they are used to push the author's arguments. Don't be afraid of being technical and make sure you are curtain of the response. 
 <referenceing_paper> 

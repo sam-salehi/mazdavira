@@ -1,6 +1,6 @@
 
 import NeoAccessor from "@repo/db/neo"
-import {PaperExtracter} from "@repo/fetch/src/pdfExtracter.js"
+import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js"
 import { generateConnectionDetails } from "@repo/model/src/referanceExtraction.js"
 
 export default class Features {
@@ -20,7 +20,7 @@ export default class Features {
         console.log(link1)
         console.log(link2)
 
-        const [pdf1, pdf2] = await Promise.all([PaperExtracter.extractBody(link1),PaperExtracter.extractBody(link2)])
+        const [pdf1, pdf2] = await Promise.all([PaperExtractor.extractBody(link1),PaperExtractor.extractBody(link2)])
 
         // prompt the model
         const response:string = await generateConnectionDetails(pdf1,pdf2,userQuestion)

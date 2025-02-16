@@ -71,7 +71,7 @@ export default class NeoAccessor {
         }
     }
 
-    public static async getReferencing(title: string) : Promise<Paper[]> { //TODO: getReferencing based on ARxiv ID instead
+    public static async getReferencing(title: string) : Promise<Paper[]> { //TODO: getReferencing based on Arxiv ID instead
         // Returns all nodes that are referencing the node with given title.
         // returns empty list if paper not found
         const session = driver.session()
