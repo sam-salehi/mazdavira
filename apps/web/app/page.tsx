@@ -1,16 +1,17 @@
 'use client'
-// import fetchArxivPapers from "@repo/arxiv/src/fetchPaper";
+import { useState } from 'react';
 
-// import extractInformation from "@repo/model/src/referanceExtraction"
-import { useEffect } from 'react';
 import ForceGraph from './src/ForceGraph';
-// import sample from "@repo/graph/src/sample.json"
+import Sidebar from './src/SideBar';
 
 
 export default function Home() {
 
-  return <div className='bg-black'>
-    Hello
+  const [sideBarOpen,setSideBarOpen] = useState<boolean>(true)
+
+  return <div className='bg-black h-full'>
+    {/* <span className='text-4xl text-red-500'> This is some text</span> */}
     <ForceGraph />
+    {sideBarOpen && <Sidebar />}
   </div>
 }

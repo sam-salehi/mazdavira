@@ -11,19 +11,34 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/model":"*",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@repo/db": "*",
+    "@repo/model": "*",
     "@repo/ui": "*",
-    "@repo/db":"*",
+    "@tailwindcss/postcss": "^4.0.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dlx": "^0.2.1",
+    "init": "^0.1.2",
+    "lucide-react": "^0.475.0",
     "next": "^15.1.0",
+    "pnpm": "^10.4.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "shadcn": "^2.3.0",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
+    "@repo/tailwind-config": "*",
     "@repo/typescript-config": "*",
     "@types/node": "^20",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.5.2",
+    "tailwindcss": "^3.4.17",
     "typescript": "5.5.4"
   }
 }
