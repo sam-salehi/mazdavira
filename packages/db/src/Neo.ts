@@ -1,12 +1,87 @@
-import { Session } from "neo4j-driver";
+import { QueryConfig, ResultSummary } from "neo4j-driver";
 import driver from "../../db/src/config.js";
 import { type Paper } from "./convert.js";
 
 // const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
 
 
+export type Node = {
+    id: string; // arxiv id
+    title: string;
+    refCount: number;
+}
+
+export type Edge = {
+    source: string,
+    target: string
+}
+
+
+
 
 export default class NeoAccessor {
+
+
+    public static async getEntireGraph() {
+
+        const [nodes, edges] = await Promise.all([this.getAllNodes(),this.getAllEdges()])
+        return {
+            nodes: nodes,
+            links: edges
+        }
+    }
+
+
+    public static async getAllNodes(): Promise<Node[]> {//FIXME:  change to private after testing
+        //returns array of all nodes 
+
+        const QUERY = `
+            MATCH (p:Paper)
+            RETURN p.title as title, p.arxiv as arxiv, p.referenced_count as refCount
+        `
+        let nodes: Node[] = [];
+
+
+        const session = driver.session()
+        try {
+            const result = await session.run(QUERY)
+            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount:rec._fields[2]}))
+        } catch (error) {
+            console.error("There was an issue fetching all nodes", error)
+            throw error
+        }
+
+        return nodes
+    }
+
+
+    public static async getAllEdges(): Promise<Edge[]> {
+
+        const QUERY = `
+            MATCH (p:Paper)-[r]->(n:Paper)
+            return p.arxiv,n.arxiv
+        `
+
+        let edges: Edge[] = [];
+
+        const session = driver.session()
+        try {
+            const result = await session.run(QUERY)
+            result.records.forEach(rec => edges.push({source: rec._fields[0], target:rec._fields[1]}))
+        } catch (error) {
+            console.error("There was in issue fetching all edges", error)
+            throw error
+        }
+        return edges
+    }
+
+
+
+
+
+
+
+
     public static async getPaper(arxiv: string): Promise<Paper | undefined>{
         // gets paper with given arxivdID. Returns null if none exists
         const QUERY = `

@@ -13,6 +13,10 @@
     "./convert": {
       "types":"./src/convert.ts",
       "default": "./dist/convert.js"
+    },
+    "./graph-creater": {
+      "types": "./src/graphCreator.ts",
+      "default":"./dist/graphCreator.js"
     }
   },
   "devDependencies": {

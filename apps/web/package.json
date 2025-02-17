@@ -13,6 +13,7 @@
   "dependencies": {
     "@repo/model":"*",
     "@repo/ui": "*",
+    "@repo/db":"*",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

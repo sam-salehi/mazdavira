@@ -1,0 +1,22 @@
+{
+    "name": "@repo/graph",
+    "type": "module",
+    "scripts": {
+      "dev": "tsc --watch",
+      "build": "tsc"
+    },
+    "exports": {
+      "./neo": {
+        "types": "./src/Neo.ts",
+        "default": "./dist/Neo.js"
+      },
+      "./convert": {
+        "types":"./src/convert.ts",
+        "default": "./dist/convert.js"
+      }
+    },
+    "devDependencies": {
+      "@repo/typescript-config": "*",
+      "typescript": "latest"
+    }
+  }

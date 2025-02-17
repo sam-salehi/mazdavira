@@ -9,7 +9,11 @@
   },
   "devDependencies": {
     "@trigger.dev/build": "^3.3.12",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.2",
     "prettier": "^3.2.5",
+    "shadcn": "^2.3.0",
+    "tailwindcss": "^4.0.6",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "turbo": "^2.3.3",
@@ -30,6 +34,7 @@
     "@supabase/supabase-js": "^2.48.1",
     "@trigger.dev/sdk": "^3.3.12",
     "@types/xml2js": "^0.4.14",
+    "3d-force-graph": "^1.76.1",
     "ai": "^4.1.0",
     "axios": "^1.7.9",
     "cheerio": "^1.0.0",
@@ -38,7 +43,9 @@
     "neo4j-driver": "^5.27.0",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^4.10.38",
+    "react-force-graph-3d": "^1.26.0",
     "supabase": "^2.6.8",
+    "three": "^0.173.0",
     "xml2js": "^0.6.2",
     "zod": "^3.24.1"
   }

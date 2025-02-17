@@ -2,7 +2,9 @@ import { experimental_createProviderRegistry } from "ai";
 import * as cheerio from "cheerio"
 import axios from "axios"
 import { parseStringPromise } from 'xml2js';
-
+import dotenv from 'dotenv';
+import https from 'https';
+dotenv.config({path: ""});
 
 
 
@@ -16,7 +18,6 @@ export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
 // const semaphore: Semaphore = new Semaphore(1)
 
 export async function  getReferencedCount(arxiv:string): Promise<number | null> {
-  return 0
   const referenceCount: number = await ArxivAPI.getReferencedCount(arxiv)
   return referenceCount
 }
@@ -106,35 +107,38 @@ class ArxivAPI {
   }
 
   private static async fetchCitationsFromScholar(title: string): Promise<number> {
+    // FIXME: make rotating proxy work
+    return 0
     const encodedTitle = encodeURIComponent(title);
     const scholarUrl = `https://scholar.google.com/scholar?q=${encodedTitle}`;
 
     // Add delay to avoid aggressive scraping
     await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
-
     try {
-        const proxyResponse = await axios.get(scholarUrl, {
-            proxy: { //TODO: figure out how to make proxy work 
-                host: "superproxy.zenrows.com",
-                port: parseInt("1337" || ''),
-                auth: {
-                    username: "3ZFxJsdY3NLb",
-                    password: "kwiMYIQeErGi"
-                }
-            },
-            headers: {
-                'User-Agent': this.getRandomUserAgent(),
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Connection': 'keep-alive'
-            },
-            timeout: 10000
-        });
+      const proxyResponse = await axios.get(scholarUrl, {
+          proxy: { //TODO: figure out how to make proxy work 
+              protocol: "http",
+              host: "superproxy.zenrows.com",
+              port: parseInt("1337" || ''),
+              auth: {
+                  username: "3ZFxJsdY3NLb",
+                  password: "kwiMYIQeErGi"
+              }
+          },
+          headers: {
+              'User-Agent': this.getRandomUserAgent(),
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'Connection': 'keep-alive'
+          },
+          timeout: 10000
+      });
+
 
         const $ = cheerio.load(proxyResponse.data);
         const citationText = $('.gs_ri .gs_fl').first().text();
         const citationMatch = citationText.match(/Cited by (\d+)/);
-        return citationMatch ? parseInt(citationMatch[1] || '0') : 0;
+        return citationMatch?.length ? parseInt(citationMatch[1] || '0') : 0;
     } catch (error) {
         console.error('Error fetching citations:', error);
         return 0;
@@ -161,6 +165,7 @@ class ArxivAPI {
     // Trim any whitespace
     return withoutVersion.trim();
   }
+
 
 }
 //   public static async getReferencedCount(arxiv: string): Promise<number> {
