@@ -1,5 +1,7 @@
 import FetchPipeline from "./FetchPipeline.js";
 import { TriggerClient } from "@trigger.dev/sdk";
+import axios from "axios"
+import * as cheerio from 'cheerio';
 // import { extractReferencesFromPDF } from "@repo/fetch/src/pdfExtracter.js";
 import {fetchPaperPDFLink, getReferencedCount } from "@repo/fetch/src/urlFetcher.js" 
 import { generateSummary } from "@repo/model/src/referanceExtraction.js";
@@ -15,17 +17,4 @@ import { Paper } from "@repo/db/convert";
 
 
 
-const data = await NeoAccessor.getEntireGraph()
-console.log(data)
-
-
-// const count = await getReferencedCount("1706.03762")
-// console.log(count)
-
-
-
-// const paper = await PaperExtractor.fetchPDF("https://arxiv.org/pdf/1706.03762")
-
-// const response = await generateSummary(paper)
-
-// console.log(response)
+FetchPipeline.extractPaperWithDepth("1706.03762",3)

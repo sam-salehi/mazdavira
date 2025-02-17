@@ -107,13 +107,10 @@ class ArxivAPI {
   }
 
   private static async fetchCitationsFromScholar(title: string): Promise<number> {
-    // FIXME: make rotating proxy work
-    return 0
     const encodedTitle = encodeURIComponent(title);
     const scholarUrl = `https://scholar.google.com/scholar?q=${encodedTitle}`;
 
     // Add delay to avoid aggressive scraping
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
     try {
       const proxyResponse = await axios.get(scholarUrl, {
           proxy: { //TODO: figure out how to make proxy work 
@@ -141,7 +138,7 @@ class ArxivAPI {
         return citationMatch?.length ? parseInt(citationMatch[1] || '0') : 0;
     } catch (error) {
         console.error('Error fetching citations:', error);
-        return 0;
+        return 0
     }
   }
 
@@ -165,8 +162,6 @@ class ArxivAPI {
     // Trim any whitespace
     return withoutVersion.trim();
   }
-
-
 }
 //   public static async getReferencedCount(arxiv: string): Promise<number> {
 //     const CROSSREF_API = `https://api.semanticscholar.org/graph/v1/paper/arXiv:${arxiv}?fields=citationCount`;
