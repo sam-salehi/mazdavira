@@ -9,6 +9,8 @@ import NeoAccessor, { Edge, Node} from "@repo/db/neo"
 export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
 
   const [graphData, setGraphData] = useState<{nodes: Node[],links: Edge[]}>()
+  const [hoverNodeID, setHoverNodeID] = useState<string>(null)
+
   const graphRef = useRef()
 
   useEffect(() => {
@@ -36,6 +38,13 @@ export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
       3000
     );
   }
+
+
+  const handleNodeHover = async function(node: any) {
+    if ((!node || hoverNodeID === node)) return;
+    setHoverNodeID(node.id || null);
+  }
+
 
   const handleNodeClick = async function(node: any) {
     zoomOntoNode(node)
@@ -73,12 +82,17 @@ export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
     }
   }
 
+
+
+
       return <div className=''>
         {graphData &&<ForceGraph3D 
           ref={graphRef}
           graphData={graphData} 
           backgroundColor='#000000' 
           nodeAutoColorBy={"recCount"} 
+          nodeColor={node => hoverNodeID === node.id ?  'rgb(255,0,0,1)' : 'rgba(0,255,255,0.6)'}
+          onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
           onLinkClick={handleEdgeClick}
           />
