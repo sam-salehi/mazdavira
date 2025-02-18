@@ -5,7 +5,8 @@ export default function Sidebar() {
 
 
     return <div className="bg-black fixed border-l border-gray-500 right-0 top-0 h-full w-1/4 p-7">
-        <Button>Click</Button>
+        <Button variant={"secondary"}>Close</Button>
+        
 
     </div>
 }
