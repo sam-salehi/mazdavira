@@ -6,12 +6,13 @@ import NeoAccessor, { Edge, Node} from "@repo/db/neo"
 
 
 
-export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
+export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar, selectedPaper, setSelectedPaper}) {
 
   const [graphData, setGraphData] = useState<{nodes: Node[],links: Edge[]}>()
-  const [hoverNodeID, setHoverNodeID] = useState<string>(null)
+  const [hoverNodeID, setHoverNodeID] = useState<string>("")
 
-  const graphRef = useRef()
+  const graphRef = useRef<typeof ForceGraph3D | null>(null);
+
 
   useEffect(() => {
     const fetchGraph = async () => {
@@ -20,9 +21,7 @@ export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
     }
     fetchGraph()
   },[])
-    
 
-    console.log("Rendered")
 
   const zoomOntoNode = function(node: any) {
     const distance = 40;
@@ -59,6 +58,7 @@ export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
           link:paper.pdf_link,
           arxiv: paper.arxiv}
           ,...chosenPapers]) 
+        setSelectedPaper(paper.arxiv)
     }
   }
 
@@ -83,6 +83,17 @@ export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
   }
 
 
+  const setNodeColor = function(node): string {
+    switch (node.id) {
+      case hoverNodeID:
+        return 'rgb(255,0,0,1)'
+      case selectedPaper:
+        return 'rgb(220,0,0,1)'
+      default:
+        return  'rgba(0,255,255,0.6)'
+    }
+  }
+
 
 
       return <div className=''>
@@ -91,10 +102,11 @@ export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar}) {
           graphData={graphData} 
           backgroundColor='#000000' 
           nodeAutoColorBy={"recCount"} 
-          nodeColor={node => hoverNodeID === node.id ?  'rgb(255,0,0,1)' : 'rgba(0,255,255,0.6)'}
+          nodeColor={setNodeColor}
           onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
           onLinkClick={handleEdgeClick}
+          nodeLabel={node => node.title}
           />
         }
       </div>

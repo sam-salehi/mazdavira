@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button"
-import { X, ChevronLeft, PanelRightOpen } from "lucide-react";
+import { X, PanelRightOpen } from "lucide-react";
 import { useState } from "react";
 // import { Skeleton } from "@/components/ui/skeleton" //TODO: display skeleton when retrieving from database
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
@@ -17,11 +16,8 @@ import {
 
 
 
-export function Sidebar({onClose,chosenPapers,setChosenPapers}) {
+export function Sidebar({selectedPaper,onSelectPaper,onClose,chosenPapers,setChosenPapers}) {
     // Sidebar is to be used for conversing with the llm and operating on the graph.
-
-    const [selectedPaper, setSelectedPaper] = useState<string>(""); // arxivID of selected paper on sidebar
-
 
     return <div className="bg-black fixed border-l border-gray-500 right-0 top-0 h-full w-1/4 p-7">
         <div className="flex justify-between">
@@ -29,7 +25,7 @@ export function Sidebar({onClose,chosenPapers,setChosenPapers}) {
         <Button variant={"secondary"}>Chat</Button>
         </div>
         <div className="mt-8 grid grid-cols-1 gap-4">
-            {chosenPapers.map(paper=> <PaperCard key={paper.arxiv} title={paper.title} authors={paper.authors} link={paper.link} selected={selectedPaper === paper.arxiv} onClick={() => setSelectedPaper(paper.arxiv)} onClose={() => setChosenPapers(chosenPapers.filter((p) => p.arxiv === paper.arxiv))}/>)}
+            {chosenPapers.map(paper=> <PaperCard key={paper.arxiv} title={paper.title} authors={paper.authors} link={paper.link} selected={selectedPaper === paper.arxiv} onClick={() => onSelectPaper(paper.arxiv)} onClose={() => setChosenPapers(chosenPapers.length > 1? chosenPapers.filter((p) => p.arxiv !== paper.arxiv):[])}/>)}
         </div>
         
 
@@ -46,16 +42,16 @@ function PaperCard({ title, year, authors, link, selected, onClick, onClose} : {
       <Card className={!selected? "w-full max-w-2xl cursor-pointer" :"w-full max-w-2xl"} onClick={onClick}>
         <CardHeader className="flex-row justify-between">
           <CardTitle className="text-xl font-bold">{title.length > maxTitleLength ? title.substring(0,maxTitleLength) + "...": title}</CardTitle> 
-          {/* // TODO: use tool tip with this. */}
           <X className="cursor-pointer" onClick={onClose}/>
         </CardHeader>
-        <CardContent>
+
+        { selected && <><CardContent>
           <p>
             Written by {authors} 
           </p>
           <p className="text-sm text-gray-700">Published in {year}</p>
         </CardContent>
-        {selected && <CardFooter className="flex flex-col gap-1">
+        <CardFooter className="flex flex-col gap-1">
         <div className="flex justify-between w-full">
         <Button 
             onClick={() => window.open(link,"_blank")?.focus()}
@@ -76,10 +72,16 @@ function PaperCard({ title, year, authors, link, selected, onClick, onClose} : {
         </Button>
         </div>
         </CardFooter>
+        </>
         }
       </Card>
     );
   };
+
+
+
+
+
 
 
 

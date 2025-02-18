@@ -23,3 +23,6 @@ const config: Omit<Config, "content"> = {
     },
   },
 }
+
+
+export default config
