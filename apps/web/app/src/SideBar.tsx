@@ -13,20 +13,14 @@ import {
 
 
 
-type chosenPapers = {title:string, year:number, authors:string, link:string,arxiv:string}
 
-  const SampleSelected: chosenPapers[] = [
-    {title:"Attention is all you need", year:2002, authors:"Some old men", link:"https://arxiv.org/pdf/1706.03762", arxiv:"12345.213"},
-    {title:"SuperConvergance: how is there a possibility of there not being enough papers", year:2002, authors:"Other fuckers", link:"https://arxiv.org/abs/1706.03762", arxiv:"2321.213"},
-    {title:"Lifes to short", year:2002, authors:"Some old men", link:"https://arxiv.org/abs/1706.03762", arxiv:"32.213"},
-  ]
 
-export function Sidebar({onClose}) {
+
+
+export function Sidebar({onClose,chosenPapers,setChosenPapers}) {
     // Sidebar is to be used for conversing with the llm and operating on the graph.
 
     const [selectedPaper, setSelectedPaper] = useState<string>(""); // arxivID of selected paper on sidebar
-
-    const [chosenPapers, setChosenPapers] = useState<chosenPapers[]>(SampleSelected) //FIXME: move to parent component to interact with graph
 
 
     return <div className="bg-black fixed border-l border-gray-500 right-0 top-0 h-full w-1/4 p-7">
