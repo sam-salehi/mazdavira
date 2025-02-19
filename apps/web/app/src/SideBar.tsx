@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
-import { X, PanelRightOpen } from "lucide-react";
+import { X, PanelRightOpen, Loader2 } from "lucide-react";
+import Features from "@repo/controller/src/features"
 // import { Skeleton } from "@/components/ui/skeleton" //TODO: display skeleton when retrieving from database
 import {
     Card,
@@ -10,15 +11,37 @@ import {
   } from "@/components/ui/card"
 
   import { chosenPaper } from "../page";
+import { useState } from "react";
 
 
 
 
-
-
+// Features.generateSummary("ww.google.com")
 
 export function Sidebar({selectedPaper,onSelectPaper,onClose,chosenPapers,setChosenPapers}:{selectedPaper:string,onSelectPaper:(s:string)=>void,onClose:()=>void,chosenPapers:chosenPaper[],setChosenPapers:(papers:chosenPaper[])=>void}) {
     // Sidebar is to be used for conversing with the llm and operating on the graph.
+
+    const generateSummary = async function(arxiv: string,pdfLink:string, callback:()=>void) {
+        try {
+            console.log("Generating summary...");
+            const response = await fetch("/api/generateSummary", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pdfLink }),
+            });
+            if (!response.ok) throw new Error("Failed to generate summary");
+            const { summary } = await response.json();
+            const adaptPaper = (paper: chosenPaper) => 
+                paper.arxiv === arxiv ? { ...paper, summary } : paper;
+            
+            setChosenPapers(chosenPapers.map(adaptPaper));
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        callback()
+    }
+
+
 
     return <div className="bg-black fixed border-l border-gray-500 right-0 top-0 h-full w-1/4 p-7">
         <div className="flex justify-between">
@@ -26,7 +49,7 @@ export function Sidebar({selectedPaper,onSelectPaper,onClose,chosenPapers,setCho
         <Button variant={"secondary"}>Chat</Button>
         </div>
         <div className="mt-8 grid grid-cols-1 gap-4">
-            {chosenPapers.map(paper=> <PaperCard key={paper.arxiv} title={paper.title} authors={paper.authors} year={paper.year} link={paper.link} selected={selectedPaper === paper.arxiv} onClick={() => onSelectPaper(paper.arxiv)} onClose={() => setChosenPapers(chosenPapers.length > 1? chosenPapers.filter((p) => p.arxiv !== paper.arxiv):[])}/>)}
+            {chosenPapers.map(paper=> <PaperCard key={paper.arxiv} id={paper.arxiv} title={paper.title} authors={paper.authors} summary={paper.summary} year={paper.year} link={paper.link} selected={selectedPaper === paper.arxiv} onSummaryGeneration={generateSummary} onClick={() => onSelectPaper(paper.arxiv)} onClose={() => setChosenPapers(chosenPapers.length > 1? chosenPapers.filter((p) => p.arxiv !== paper.arxiv):[])}/>)}
         </div>
         
 
@@ -34,14 +57,24 @@ export function Sidebar({selectedPaper,onSelectPaper,onClose,chosenPapers,setCho
 }
 
 const maxTitleLength: number = 25;
-function PaperCard({ title, year, authors, link, selected, onClick, onClose} : {title:string, year:number, authors:string[], link:string, selected:boolean, onClick:()=>void,onClose:()=>void}){
+function PaperCard({ id,title, year, authors, summary, link, selected,onSummaryGeneration, onClick, onClose} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string, selected:boolean,onSummaryGeneration:(id:string,pdfLink:string,callback: ()=>void)=>void , onClick:()=>void,onClose:()=>void}){
 
     return selected? 
-        <FullPaperCard title={title} year={year} authors={authors} link={link} onClose={onClose}/> :
+        <FullPaperCard id={id} title={title} year={year} authors={authors} link={link} summary={summary} onClose={onClose} onSummaryGeneraton={onSummaryGeneration}/> :
         <PartialPaperCard title={title} onClose={onClose} onClick={onClick}/>
 }
 
-function FullPaperCard({ title, year, authors, link, onClose} : {title:string, year:number, authors:string[], link:string,onClose:()=>void}) {
+function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummaryGeneraton} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string,onClose:()=>void, onSummaryGeneraton:(id:string,pdfLink:string,callback: ()=>void)=>void }) {
+
+    const [generatingSummary,setGeneratingSummary] = useState<boolean>(false)
+
+    const handleSummaryGeneration = function() {
+        setGeneratingSummary(true)
+        onSummaryGeneraton(id,link,()=>{setGeneratingSummary(false);})
+    }
+
+    if (summary) console.log(summary)
+
     return <Card className="w-full max-w-2xl">
     <CardHeader className="flex-row justify-between">
       <CardTitle className="text-xl font-bold">{title}</CardTitle> 
@@ -53,6 +86,7 @@ function FullPaperCard({ title, year, authors, link, onClose} : {title:string, y
         {authors.reduce((acc,val) => acc + val + ", ")} 
       </p>
       <p className="text-sm text-gray-700">{year}</p>
+      {summary && <p>{summary}</p>}
     </CardContent>
     <CardFooter className="flex flex-col gap-1">
     <div className="flex justify-between w-full">
@@ -62,9 +96,16 @@ function FullPaperCard({ title, year, authors, link, onClose} : {title:string, y
     >
         View Paper
     </Button>
-    <Button>
-        Generate Summary
+    {generatingSummary?
+    <Button disabled variant="ghost">
+        <Loader2 className="animate-spin" />
+        Generating
+    </Button> :
+    <Button onClick={handleSummaryGeneration}>
+    Generate Summary
     </Button>
+    }
+
     </div>
     <div className="flex justify-between w-full">
     <Button>
@@ -92,8 +133,7 @@ function PartialPaperCard({title,onClose, onClick}: {title:string, onClose:() =>
 export function SidebarButton({onClick}:{onClick: ()=>void}) {
 
     return <Button className="bg-white fixed right-0 top-1/2 transform -translate-y-1/2 h-52 w-2" variant="outline" onClick={onClick}>
-        {/* <ChevronLeft />
-         */}
+
          <PanelRightOpen className=""/>
     </Button>
 }
