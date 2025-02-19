@@ -11,12 +11,12 @@ import {Sidebar, SidebarButton} from './src/SideBar';
 //   {title:"Lifes to short", year:2002, authors:"Some old men", link:"https://arxiv.org/abs/1706.03762", arxiv:"32.213"},
 // ]
 
-type chosenPapers = {title:string, year:number, authors:string, link:string,arxiv:string}
+export type chosenPaper = {title:string, year:number, authors:string[], link:string,arxiv:string}
 
 export default function Home() {
 
   const [sideBarOpen,setSideBarOpen] = useState<boolean>(false)
-  const [chosenPapers, setChosenPapers] = useState<chosenPapers[]>([]) 
+  const [chosenPapers, setChosenPapers] = useState<chosenPaper[]>([]) 
   const [selectedPaper, setSelectedPaper] = useState<string>(""); // arxivID of selected paper on sidebar
 
 

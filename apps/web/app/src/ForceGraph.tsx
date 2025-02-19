@@ -1,12 +1,12 @@
 import ForceGraph3D from 'react-force-graph-3d';
 import { useEffect, useState, useRef } from 'react';
 import NeoAccessor, { Edge, Node} from "@repo/db/neo"
+import { chosenPaper } from '../page';
 
 
 
 
-
-export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar, selectedPaper, setSelectedPaper}) {
+export default function ForceGraph({chosenPapers,setChosenPapers,openSideBar, selectedPaper, setSelectedPaper}:{chosenPapers: chosenPaper[], setChosenPapers: (chosen: chosenPaper[]) => void, openSideBar:()=>void, selectedPaper:string, setSelectedPaper:(s:string)=>void}) {
 
   const [graphData, setGraphData] = useState<{nodes: Node[],links: Edge[]}>()
   const [hoverNodeID, setHoverNodeID] = useState<string>("")
