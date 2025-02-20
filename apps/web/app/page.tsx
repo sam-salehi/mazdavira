@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react';
 import ForceGraph from './src/ForceGraph';
-import {Sidebar, SidebarButton} from './src/SideBar';
+import {Sidebar} from '../components/layouts/SideBar';
+import SidebarButton from '@/components/ui/SideBarButton';
 
 
 
