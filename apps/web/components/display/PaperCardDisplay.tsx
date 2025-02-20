@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Input } from "../ui/input";
  
 import { Loader2, X } from "lucide-react"
 import { Button } from "../ui/button";
@@ -23,7 +24,7 @@ import SummaryDisplay from "./SummaryDisplay";
 
 
 const maxTitleLength: number = 25;
-export default function PaperCard({ id,title, year, authors, summary, link, selected,onSummaryGeneration, onClick, onClose} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string, selected:boolean,onSummaryGeneration:(id:string,pdfLink:string,callback: ()=>void,errorCallback:()=>void)=>void , onClick:()=>void,onClose:()=>void}){
+export default function PaperCard({ id,title, year, authors, summary, link, selected,onSummaryGeneration, onQuestionResponseGeneration, onClick, onClose} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string, selected:boolean,onSummaryGeneration:(id:string,pdfLink:string,callback: ()=>void,errorCallback:()=>void)=>void, onQuestionResponseGeneration: (pdfLink:string,question:string,callback:()=>void,errorCallback:()=>void)=>void , onClick:()=>void,onClose:()=>void}){
 
     return selected? 
         <FullPaperCard id={id} title={title} year={year} authors={authors} link={link} summary={summary} onClose={onClose} onSummaryGeneraton={onSummaryGeneration}/> :
@@ -70,9 +71,10 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
     <Button>
         Call BFS
     </Button>
-    <Button>
+    <PromptQuestionButton />
+    {/* <Button>
         Prompt Question
-    </Button>
+    </Button> */}
     </div>
     </CardFooter>
   </Card>
@@ -101,8 +103,15 @@ function SummarizePaperButton({summaryStatus,onSummaryGeneration, onOpenSummary}
 
 
 function PromptQuestionButton() {
-  //
 
+  return <Popover>
+    <PopoverTrigger asChild>
+      <Button>Ask Question</Button>
+    </PopoverTrigger>
+    <PopoverContent>
+      <Input placeholder="question"/>
+    </PopoverContent>
+  </Popover>
 
 } 
 

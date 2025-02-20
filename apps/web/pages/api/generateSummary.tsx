@@ -1,7 +1,6 @@
 import Features from "@repo/controller/src/features"
 
 export default async function handler(req, res) {
-    console.log("Called")
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
