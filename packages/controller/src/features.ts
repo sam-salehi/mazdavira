@@ -1,7 +1,7 @@
 
 import NeoAccessor from "@repo/db/neo"
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js"
-import { generateConnectionDetails } from "@repo/model/src/referanceExtraction.js"
+import { generateConnectionDetails,generateSummary } from "@repo/model/src/referanceExtraction.js"
 
 export default class Features {
     public static async findConnection(title1:string, title2:string): Promise<string> {
@@ -26,4 +26,13 @@ export default class Features {
         const response:string = await generateConnectionDetails(pdf1,pdf2,userQuestion)
         return response
     }
+
+
+    public static async generateSummary(pdfLink:string): Promise<string> {
+        // makes a summary of paper at link from model
+        const paperPDF = await PaperExtractor.fetchPDF(pdfLink)
+        const summary = await generateSummary(paperPDF)
+        return summary
+    }
+
 }

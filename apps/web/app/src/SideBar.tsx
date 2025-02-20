@@ -12,6 +12,8 @@ import {
 
   import { chosenPaper } from "../page";
 import { useState } from "react";
+import { createPortal } from "react-dom";
+import SummaryDisplay from "./SummaryDisplay"
 
 
 
@@ -64,18 +66,20 @@ function PaperCard({ id,title, year, authors, summary, link, selected,onSummaryG
         <PartialPaperCard title={title} onClose={onClose} onClick={onClick}/>
 }
 
+
+type SummaryStatus = "available"|"generating"|"rest"|"view"
 function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummaryGeneraton} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string,onClose:()=>void, onSummaryGeneraton:(id:string,pdfLink:string,callback: ()=>void)=>void }) {
 
-    const [generatingSummary,setGeneratingSummary] = useState<boolean>(false)
+    const [summaryStatus,setSummaryStatus] = useState<SummaryStatus>("rest")
 
     const handleSummaryGeneration = function() {
-        setGeneratingSummary(true)
-        onSummaryGeneraton(id,link,()=>{setGeneratingSummary(false);})
+        setSummaryStatus("generating")
+        onSummaryGeneraton(id,link,()=>{setSummaryStatus("view");})
     }
 
     if (summary) console.log(summary)
 
-    return <Card className="w-full max-w-2xl">
+    return <><Card className="w-full max-w-2xl">
     <CardHeader className="flex-row justify-between">
       <CardTitle className="text-xl font-bold">{title}</CardTitle> 
       <X className="cursor-pointer" onClick={onClose}/>
@@ -86,7 +90,6 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
         {authors.reduce((acc,val) => acc + val + ", ")} 
       </p>
       <p className="text-sm text-gray-700">{year}</p>
-      {summary && <p>{summary}</p>}
     </CardContent>
     <CardFooter className="flex flex-col gap-1">
     <div className="flex justify-between w-full">
@@ -96,8 +99,7 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
     >
         View Paper
     </Button>
-    <SummarizePaperButton onSummaryGeneration={onSummaryGeneraton} id={id} link={link}/>
-
+    <SummarizePaperButton summaryStatus={summaryStatus} onSummaryGeneration={handleSummaryGeneration} onOpenSummary={() => setSummaryStatus("view")}/>
     </div>
     <div className="flex justify-between w-full">
     <Button>
@@ -109,29 +111,23 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
     </div>
     </CardFooter>
   </Card>
+  {summaryStatus === "view" && <SummaryDisplay summary={summary} onCloseSummary={()=>setSummaryStatus("available")}/> }
+  </>
 
 }
 
 
 
-function SummarizePaperButton({onSummaryGeneration,id,link}:{onSummaryGeneration:(id:string,link:string,callback:()=>void) => void,id:string,link:string}) {
-    const [generatingSummary,setGeneratingSummary] = useState<boolean>(false)
+function SummarizePaperButton({summaryStatus,onSummaryGeneration, onOpenSummary}:{summaryStatus:SummaryStatus,onSummaryGeneration:()=>void, onOpenSummary:()=>void}) {
+    if (summaryStatus === "available" || summaryStatus === "view") return <Button onClick={onOpenSummary}>View Summary</Button> 
+    if (summaryStatus === "generating") return <Button disabled variant="ghost">
+                                                <Loader2 className="animate-spin" />
+                                                Generating
+                                                </Button>
+    return  <Button onClick={onSummaryGeneration}>Generate Summary</Button>
 
-    const handleSummaryGeneration = function() {
-        setGeneratingSummary(true)
-        onSummaryGeneration(id,link,()=>{setGeneratingSummary(false);})
-    }
-
-    return generatingSummary?
-        <Button disabled variant="ghost">
-            <Loader2 className="animate-spin" />
-            Generating
-        </Button> :
-        <Button onClick={handleSummaryGeneration}>
-        Generate Summary
-        </Button>
-        
 }
+
 
 function PartialPaperCard({title,onClose, onClick}: {title:string, onClose:() => void, onClick:() => void}) {
     return       <Card className="w-full max-w-2xl cursor-pointer" onClick={onClick}>

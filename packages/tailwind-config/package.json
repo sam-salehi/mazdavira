@@ -7,7 +7,6 @@
       ".": "./tailwind.config.ts"
     },
     "devDependencies": {
-      "@turbo-with-tailwind/typescript-config": "workspace:*",
       "tailwindcss": "^3.4.1"
     }
   }
