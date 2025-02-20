@@ -6,8 +6,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+ 
 import { Loader2, X } from "lucide-react"
 import { Button } from "../ui/button";
+
 
 import SummaryDisplay from "./SummaryDisplay";
 
@@ -76,15 +83,28 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
 
 function SummarizePaperButton({summaryStatus,onSummaryGeneration, onOpenSummary}:{summaryStatus:SummaryStatus,onSummaryGeneration:()=>void, onOpenSummary:()=>void}) {
   if (summaryStatus === "available" || summaryStatus === "view") return <Button onClick={onOpenSummary}>View Summary</Button> 
-  if (summaryStatus === "generating" || summaryStatus === "error") return <Button disabled variant="ghost">
+  if (summaryStatus === "generating") return <Button disabled variant="ghost">
                                               <Loader2 className="animate-spin" />
                                               Generating
-                                              {summaryStatus === "error" }
-                                              </Button> //TODO: setup using shadcn popover. Muscle Through
-  return  <Button onClick={onSummaryGeneration}>Generate Summary</Button>
+                                              </Button>
+  if (summaryStatus === "error") return <Popover>
+    <PopoverTrigger asChild>
+      <Button variant="destructive">Error Generating</Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-80">
+      <p>Encountered error prompting model</p>
+    </PopoverContent>
 
+  </Popover>
+  return  <Button onClick={onSummaryGeneration}>Generate Summary</Button>
 }
 
+
+function PromptQuestionButton() {
+  //
+
+
+} 
 
 
 function PartialPaperCard({title,onClose, onClick}: {title:string, onClose:() => void, onClick:() => void}) {

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ForceGraph from './src/ForceGraph';
 import {Sidebar} from '../components/layouts/SideBar';
 import SidebarButton from '@/components/ui/SideBarButton';
+import { ChantHistoryProvider } from './src/ChatContext';
 
 
 
@@ -21,12 +22,12 @@ export default function Home() {
   const [selectedPaper, setSelectedPaper] = useState<string>(""); // arxivID of selected paper on sidebar
 
 
-
-
   return <div className='bg-black h-full'>
     {/* <span className='text-4xl text-red-500'> This is some text</span> */}
     <ForceGraph chosenPapers={chosenPapers} setChosenPapers={setChosenPapers} selectedPaper={selectedPaper} setSelectedPaper={setSelectedPaper} openSideBar={() => setSideBarOpen(true)}/>
+    <ChantHistoryProvider>
     {sideBarOpen ? <Sidebar selectedPaper={selectedPaper} onSelectPaper={setSelectedPaper} onClose={() => setSideBarOpen(false)} chosenPapers={chosenPapers} setChosenPapers={setChosenPapers}/> : <SidebarButton onClick={() => setSideBarOpen(true)}/>}
+    </ChantHistoryProvider>
   </div>
 }
 
