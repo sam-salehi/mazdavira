@@ -4,7 +4,7 @@ import sharedConfig from "@repo/tailwind-config";
 const config: Pick<Config, "content" | "presets"> = {
     darkMode: ["class"],
     content: ["./app/**/*.tsx",
-        './components/**/*.{ts,tsx}',
+             './components/**/*.{ts,tsx}',
     ],
   presets: [sharedConfig],
     plugins: [require("tailwindcss-animate")],

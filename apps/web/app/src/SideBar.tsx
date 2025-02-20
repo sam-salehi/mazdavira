@@ -96,15 +96,7 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
     >
         View Paper
     </Button>
-    {generatingSummary?
-    <Button disabled variant="ghost">
-        <Loader2 className="animate-spin" />
-        Generating
-    </Button> :
-    <Button onClick={handleSummaryGeneration}>
-    Generate Summary
-    </Button>
-    }
+    <SummarizePaperButton onSummaryGeneration={onSummaryGeneraton} id={id} link={link}/>
 
     </div>
     <div className="flex justify-between w-full">
@@ -118,6 +110,27 @@ function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummar
     </CardFooter>
   </Card>
 
+}
+
+
+
+function SummarizePaperButton({onSummaryGeneration,id,link}:{onSummaryGeneration:(id:string,link:string,callback:()=>void) => void,id:string,link:string}) {
+    const [generatingSummary,setGeneratingSummary] = useState<boolean>(false)
+
+    const handleSummaryGeneration = function() {
+        setGeneratingSummary(true)
+        onSummaryGeneration(id,link,()=>{setGeneratingSummary(false);})
+    }
+
+    return generatingSummary?
+        <Button disabled variant="ghost">
+            <Loader2 className="animate-spin" />
+            Generating
+        </Button> :
+        <Button onClick={handleSummaryGeneration}>
+        Generate Summary
+        </Button>
+        
 }
 
 function PartialPaperCard({title,onClose, onClick}: {title:string, onClose:() => void, onClick:() => void}) {
