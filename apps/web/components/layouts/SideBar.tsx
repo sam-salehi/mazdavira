@@ -40,7 +40,8 @@ export function Sidebar({selectedPaper,onSelectPaper,onClose,chosenPapers,setCho
     
 
 
-    const generateQuestionResponse = async function(pdfLink:string,question:string,callback:()=>void,errorCallback:()=>void) {
+    const generateQuestionResponse = async function(pdfLink:string,question:string) {
+        console.log("Generating response")
         const id: string = nanoid()
         try {
             addQuestionPrompt(id,question)
@@ -49,16 +50,17 @@ export function Sidebar({selectedPaper,onSelectPaper,onClose,chosenPapers,setCho
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ pdfLink,question }),
             })
-            if (!response.ok) throw new Error("Error") //FIXME: display actual error insteads
+            if (!response.ok) throw new Error("Error") //FIXME: display actual error instead
             console.log("Fetched response: ") //FIXME: delete these
             console.log(response)
             const {questionResponse} = await response.json()
+            console.log(questionResponse)
 
             updateQuestionPrompt(id,questionResponse)
-            callback()
+            // callback()
         } catch {
             removePrompt(id)
-            errorCallback()
+            // errorCallback()
         }
 
     }
