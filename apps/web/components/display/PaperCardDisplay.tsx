@@ -5,137 +5,247 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 import { Input } from "../ui/input";
 import { Form } from "../ui/form";
- 
-import { Loader2, X } from "lucide-react"
+
+import { Loader2, X } from "lucide-react";
 import { Button } from "../ui/button";
 
-import { useForm } from 'react-hook-form';
+import { useForm } from "react-hook-form";
 import SummaryDisplay from "./SummaryDisplay";
 
-
-
-
-
 const maxTitleLength: number = 25;
-export default function PaperCard({ id,title, year, authors, summary, link, selected,onSummaryGeneration, onQuestionResponseGeneration, onClick, onClose} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string, selected:boolean,onSummaryGeneration:(id:string,pdfLink:string,callback: ()=>void,errorCallback:()=>void)=>void, onQuestionResponseGeneration: (pdfLink:string,question:string)=>void , onClick:()=>void,onClose:()=>void}){
-
-    return selected? 
-        <FullPaperCard id={id} title={title} year={year} authors={authors} link={link} summary={summary} onClose={onClose} onSummaryGeneraton={onSummaryGeneration} onQuestionResponseGeneration={onQuestionResponseGeneration}/> :
-        <PartialPaperCard title={title} onClose={onClose} onClick={onClick}/>
+export default function PaperCard({
+  id,
+  title,
+  year,
+  authors,
+  summary,
+  link,
+  selected,
+  onSummaryGeneration,
+  onQuestionResponseGeneration,
+  onClick,
+  onClose,
+}: {
+  id: string;
+  title: string;
+  year: number;
+  authors: string[];
+  link: string;
+  summary?: string;
+  selected: boolean;
+  onSummaryGeneration: (
+    id: string,
+    pdfLink: string,
+    callback: () => void,
+    errorCallback: () => void,
+  ) => void;
+  onQuestionResponseGeneration: (pdfLink: string, question: string) => void;
+  onClick: () => void;
+  onClose: () => void;
+}) {
+  return selected ? (
+    <FullPaperCard
+      arxivID={id}
+      title={title}
+      year={year}
+      authors={authors}
+      link={link}
+      summary={summary}
+      onClose={onClose}
+      onSummaryGeneraton={onSummaryGeneration}
+      onQuestionResponseGeneration={onQuestionResponseGeneration}
+    />
+  ) : (
+    <PartialPaperCard title={title} onClose={onClose} onClick={onClick} />
+  );
 }
 
+export type SummaryStatus =
+  | "available"
+  | "generating"
+  | "rest"
+  | "view"
+  | "error";
 
-export type SummaryStatus = "available"|"generating"|"rest"|"view"|"error"
-
-function FullPaperCard({id, title, year, authors, link, summary,onClose,onSummaryGeneraton,onQuestionResponseGeneration} : {id:string,title:string, year:number, authors:string[], link:string, summary?:string,onClose:()=>void, onSummaryGeneraton:(id:string,pdfLink:string,callback: ()=>void,errorCallback:()=>void)=>void, onQuestionResponseGeneration:(pdfLink:string,questions:string)=>void}) {
-  // FIXME: id is actually arxivID, figure.
+function FullPaperCard({
+  arxivID,
+  title,
+  year,
+  authors,
+  link,
+  summary,
+  onClose,
+  onSummaryGeneraton,
+  onQuestionResponseGeneration,
+}: {
+  arxivID: string;
+  title: string;
+  year: number;
+  authors: string[];
+  link: string;
+  summary?: string;
+  onClose: () => void;
+  onSummaryGeneraton: (
+    id: string,
+    pdfLink: string,
+    callback: () => void,
+    errorCallback: () => void,
+  ) => void;
+  onQuestionResponseGeneration: (pdfLink: string, questions: string) => void;
+}) {
   // FIXME: is there a better way to declare types in react?
   // FIXME: use Context for onSummaryGeneration and onQuestionResponseGeneration
-    const [summaryStatus,setSummaryStatus] = useState<SummaryStatus>("rest")
+  const [summaryStatus, setSummaryStatus] = useState<SummaryStatus>("rest");
 
-    const handleSummaryGeneration = function() {
-        setSummaryStatus("generating")
-        onSummaryGeneraton(id,link,()=>setSummaryStatus("view"),()=>setSummaryStatus("error"))
-    }
+  const handleSummaryGeneration = function () {
+    setSummaryStatus("generating");
+    onSummaryGeneraton(
+      arxivID,
+      link,
+      () => setSummaryStatus("view"),
+      () => setSummaryStatus("error"),
+    );
+  };
 
-    if (summary) console.log(summary)
+  return (
+    <>
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="flex-row justify-between">
+          <CardTitle className="text-xl font-bold">{title}</CardTitle>
+          <X className="cursor-pointer" onClick={onClose} />
+        </CardHeader>
 
-    return <><Card className="w-full max-w-2xl">
-    <CardHeader className="flex-row justify-between">
-      <CardTitle className="text-xl font-bold">{title}</CardTitle> 
-      <X className="cursor-pointer" onClick={onClose}/>
-    </CardHeader>
-
-    <CardContent>
-      <p>
-        {authors.reduce((acc,val) => acc + val + ", ")} 
-      </p>
-      <p className="text-sm text-gray-700">{year}</p>
-    </CardContent>
-    <CardFooter className="flex flex-col gap-1">
-    <div className="flex justify-between w-full">
-    <Button 
-        onClick={() => window.open(link,"_blank")?.focus()}
-        className="flex items-center gap-2"
-    >
-        View Paper
-    </Button>
-    <SummarizePaperButton summaryStatus={summaryStatus} onSummaryGeneration={handleSummaryGeneration} onOpenSummary={() => setSummaryStatus("view")}/>
-    </div>
-    <div className="flex justify-between w-full">
-    <Button>
-        Call BFS
-    </Button>
-    <PromptQuestionButton questionEntered={(question:string) => onQuestionResponseGeneration(link,question)}/>
-    {/* <Button>
+        <CardContent>
+          <p>{authors.reduce((acc, val) => acc + val + ", ")}</p>
+          <p className="text-sm text-gray-700">{year}</p>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-1">
+          <div className="flex justify-between w-full">
+            <Button
+              onClick={() => window.open(link, "_blank")?.focus()}
+              className="flex items-center gap-2"
+            >
+              View Paper
+            </Button>
+            <SummarizePaperButton
+              summaryStatus={summaryStatus}
+              onSummaryGeneration={handleSummaryGeneration}
+              onOpenSummary={() => setSummaryStatus("view")}
+            />
+          </div>
+          <div className="flex justify-between w-full">
+            <Button>Call BFS</Button>
+            <PromptQuestionButton
+              questionEntered={(question: string) =>
+                onQuestionResponseGeneration(link, question)
+              }
+            />
+            {/* <Button>
         Prompt Question
     </Button> */}
-    </div>
-    </CardFooter>
-  </Card>
-  {summaryStatus === "view" && <SummaryDisplay summary={summary} onCloseSummary={()=>setSummaryStatus("available")}/> }
-  </>
-
+          </div>
+        </CardFooter>
+      </Card>
+      {summaryStatus === "view" && (
+        <SummaryDisplay
+          summary={summary}
+          onCloseSummary={() => setSummaryStatus("available")}
+        />
+      )}
+    </>
+  );
 }
 
-function SummarizePaperButton({summaryStatus,onSummaryGeneration, onOpenSummary}:{summaryStatus:SummaryStatus,onSummaryGeneration:()=>void, onOpenSummary:()=>void}) {
-  if (summaryStatus === "available" || summaryStatus === "view") return <Button onClick={onOpenSummary}>View Summary</Button> 
-  if (summaryStatus === "generating") return <Button disabled variant="ghost">
-                                              <Loader2 className="animate-spin" />
-                                              Generating
-                                              </Button>
-  if (summaryStatus === "error") return <Popover>
-    <PopoverTrigger asChild>
-      <Button variant="destructive">Error Generating</Button>
-    </PopoverTrigger>
-    <PopoverContent className="w-80">
-      <p>Encountered error prompting model</p>
-    </PopoverContent>
-
-  </Popover>
-  return  <Button onClick={onSummaryGeneration}>Generate Summary</Button>
+function SummarizePaperButton({
+  summaryStatus,
+  onSummaryGeneration,
+  onOpenSummary,
+}: {
+  summaryStatus: SummaryStatus;
+  onSummaryGeneration: () => void;
+  onOpenSummary: () => void;
+}) {
+  if (summaryStatus === "available" || summaryStatus === "view")
+    return <Button onClick={onOpenSummary}>View Summary</Button>;
+  if (summaryStatus === "generating")
+    return (
+      <Button disabled variant="ghost">
+        <Loader2 className="animate-spin" />
+        Generating
+      </Button>
+    );
+  if (summaryStatus === "error")
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="destructive">Error Generating</Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <p>Encountered error prompting model</p>
+        </PopoverContent>
+      </Popover>
+    );
+  return <Button onClick={onSummaryGeneration}>Generate Summary</Button>;
 }
 
-
-function PromptQuestionButton({questionEntered}:{questionEntered: (question:string) => void}) {
-
-  const [question,setQuestion] = useState<string>("")
+function PromptQuestionButton({
+  questionEntered,
+}: {
+  questionEntered: (question: string) => void;
+}) {
+  const [question, setQuestion] = useState<string>("");
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      console.log("Enter pressed")
-      e.preventDefault()
-      questionEntered(question)
+      e.preventDefault();
+      questionEntered(question);
     }
-  }
+  };
 
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button>Ask Question</Button>
+      </PopoverTrigger>
+      <PopoverContent>
+        <Input
+          placeholder="question"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
-  return <Popover>
-    <PopoverTrigger asChild>
-      <Button>Ask Question</Button>
-    </PopoverTrigger>
-    <PopoverContent>
-      <Input placeholder="question" value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={handleKeyDown}/>
-    </PopoverContent>
-  </Popover>
-
-} 
-
-
-function PartialPaperCard({title,onClose, onClick}: {title:string, onClose:() => void, onClick:() => void}) {
-  return       <Card className="w-full max-w-2xl cursor-pointer" onClick={onClick}>
-   <CardHeader className="flex-row justify-between">
-  <CardTitle className="text-xl font-bold">{title.length > maxTitleLength ? title.substring(0,maxTitleLength) + "...": title}</CardTitle> 
-  <X className="cursor-pointer" onClick={onClose}/>
-</CardHeader>
-</Card>
-
+function PartialPaperCard({
+  title,
+  onClose,
+  onClick,
+}: {
+  title: string;
+  onClose: () => void;
+  onClick: () => void;
+}) {
+  return (
+    <Card className="w-full max-w-2xl cursor-pointer" onClick={onClick}>
+      <CardHeader className="flex-row justify-between">
+        <CardTitle className="text-xl font-bold">
+          {title.length > maxTitleLength
+            ? title.substring(0, maxTitleLength) + "..."
+            : title}
+        </CardTitle>
+        <X className="cursor-pointer" onClick={onClose} />
+      </CardHeader>
+    </Card>
+  );
 }
