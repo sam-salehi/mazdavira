@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
+import { nanoid } from "nanoid";
 
 type responseType = "summary" | "question-response";
 type responseStatus = "displayed" | "fetching"; // add fetched state later
@@ -12,11 +13,13 @@ export type llmResponse = {
 
 interface ChatPromptType {
   chatHistory: llmResponse[];
-  addSummaryPrompt: (id: string) => void;
-  updateSummaryPrompt: (id: string, response: string) => void;
-  addQuestionPrompt: (id: string, question: string) => void;
-  updateQuestionPrompt: (id: string, response: string) => void;
-  removePrompt: (id: string) => void;
+//   addSummaryPrompt: (id: string) => void;
+//   updateSummaryPrompt: (id: string, response: string) => void;
+//   addQuestionPrompt: (id: string, question: string) => void;
+//   updateQuestionPrompt: (id: string, response: string) => void;
+//   removePrompt: (id: string) => void;
+  generateSummary: (arxiv:string,pdfLink:string)=>void     
+  generateQuestionResponse: (pdfLink:string,question:string)=>void
 }
 
 export const ChatContext = createContext<ChatPromptType | undefined>(undefined);
@@ -69,13 +72,59 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
+
+  const generateSummary = async function (
+    arxiv: string,
+    pdfLink: string,
+  ) {
+    const id: string = nanoid(); // unique identifier for array
+    try {
+      addSummaryPrompt(id);
+      const response = await fetch("/api/generateSummary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfLink }),
+      });
+      if (!response.ok) throw new Error("Failed to generate summary");
+      const { summary } = await response.json();
+
+    //   setChosenPapers(chosenPapers.map(adaptPaper));
+      updateSummaryPrompt(id, summary);
+    } catch {
+      removePrompt(id);
+    }
+  };
+
+  const generateQuestionResponse = async function (
+    pdfLink: string,
+    question: string,
+  ) {
+    const id: string = nanoid();
+    try {
+      addQuestionPrompt(id, question);
+      const response = await fetch("/api/generateQuestionResponse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfLink, question }),
+      });
+      if (!response.ok) throw new Error("Error"); //FIXME: display actual error instead
+      const { questionResponse } = await response.json();
+
+      updateQuestionPrompt(id, questionResponse);
+    } catch {
+      removePrompt(id);
+    }
+  };
+
   const value = {
     chatHistory,
-    addSummaryPrompt,
-    updateSummaryPrompt,
-    addQuestionPrompt,
-    updateQuestionPrompt,
-    removePrompt,
+    // addSummaryPrompt,
+    // updateSummaryPrompt,
+    // addQuestionPrompt,
+    // updateQuestionPrompt,
+    // removePrompt,
+    generateSummary,
+    generateQuestionResponse
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
