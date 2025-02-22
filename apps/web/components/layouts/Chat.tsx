@@ -3,6 +3,8 @@
 import { useChat } from '@ai-sdk/react';
 import { MemoizedMarkdown } from '../display/MarkdownDisplay';
 import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { useEffect, useRef } from 'react';
 
 export default function ChatLayout() {
   const { messages } = useChat({
@@ -11,7 +13,7 @@ export default function ChatLayout() {
   });
 
   return (
-    <div className="flex flex-col w-full h-full pt-4 px-2 mx-auto stretch bg-white rounded-lg">
+    <div className="relative flex flex-col w-full h-[95%] mb-2 pt-4 px-2 mx-auto stretch bg-white rounded-lg">
       <div className="space-y-4 mb-2 overflow-scroll hide-scrollbar">
         {messages.map(message => (
           <div key={message.id}>
@@ -31,13 +33,37 @@ export default function ChatLayout() {
 
 const MessageInput = () => {
   const { input, handleSubmit, handleInputChange } = useChat({ id: 'chat' });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleResize = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight+5}px`;
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault()
+        handleSubmit()
+    }
+  }
+
+  useEffect(() => {
+    handleResize();
+  }, [input]);
+
   return (
     <form onSubmit={handleSubmit}>
-      <Input
-        className="fixed w-full bottom-0 p-2 mb-8 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+      <textarea
+        ref={textareaRef}
+        className="w-[95%] absolute bottom-6 p-2 rounded shadow-xl resize-none"
         placeholder="Say something..."
         value={input}
         onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        rows={1}
+        style={{ height: 'auto' }}
       />
     </form>
   );
