@@ -43,3 +43,22 @@ export const CONNECTION_GENERATION_PROMPT_W_QUESTION =
     `You will be given two research papers with one referencing the other and a question which you should respond to about the papers.` 
     + CONNECTION_GENERATION_PROMPT 
     + `<question>{question}<question>`
+
+
+
+export const QUESTION_ON_PAPER_PROMPT = `I want you to analyze a research paper I'll share with you. After I reading the paper's text, please answer the following specific question about the paper:
+<question>
+{question}
+<question/>
+
+When answering, please:
+
+Quote relevant sections from the paper to support your response.
+Discuss any limitations or caveats in the paper related to my question.
+Point out if any important information seems to be missing to fully answer my question.
+If the paper provides insufficient evidence for a complete answer, acknowledge this.
+
+Here is the paper's text:
+<paper>
+{paper}
+<paper/>`

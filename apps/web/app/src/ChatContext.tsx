@@ -22,7 +22,7 @@ interface ChatPromptType {
   generateQuestionResponse: (pdfLink:string,question:string)=>void
 }
 
-export const ChatContext = createContext<ChatPromptType | undefined>(undefined);
+const ChatContext = createContext<ChatPromptType | undefined>(undefined);
 
 export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -79,6 +79,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   ) {
     const id: string = nanoid(); // unique identifier for array
     try {
+        console.log("Sending post")
       addSummaryPrompt(id);
       const response = await fetch("/api/generateSummary", {
         method: "POST",
@@ -87,7 +88,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       });
       if (!response.ok) throw new Error("Failed to generate summary");
       const { summary } = await response.json();
-
+      console.log("Post response", summary);
     //   setChosenPapers(chosenPapers.map(adaptPaper));
       updateSummaryPrompt(id, summary);
     } catch {
@@ -107,9 +108,9 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdfLink, question }),
       });
-      if (!response.ok) throw new Error("Error"); //FIXME: display actual error instead
+      if (!response.ok) throw new Error("Error"); // FIXME:
       const { questionResponse } = await response.json();
-
+      console.log("Response: ", response)
       updateQuestionPrompt(id, questionResponse);
     } catch {
       removePrompt(id);

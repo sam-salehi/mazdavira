@@ -16,6 +16,7 @@ import { Button } from "../ui/button";
 import { useChatContext } from "@/app/src/ChatContext";
 
 import {X} from "lucide-react"
+import { useSideBarContext } from "../layouts/SideBar";
 
 const maxTitleLength: number = 25;
 export default function PaperCard({
@@ -73,12 +74,15 @@ function FullPaperCard({
 }) {
 
   const {generateSummary, generateQuestionResponse} = useChatContext();
+  const {openChat} = useSideBarContext();
 
   const handleSummaryGeneration = function () {
+    console.log("Handling")
     generateSummary(
       arxivID,
       link
     );
+    openChat();
   };
 
   return (
@@ -165,10 +169,13 @@ function PromptQuestionButton({
 }) {
   const [question, setQuestion] = useState<string>("");
 
+  const {openChat} = useSideBarContext()
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       questionEntered(question);
+      openChat();
     }
   };
 

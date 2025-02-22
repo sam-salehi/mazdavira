@@ -1,12 +1,29 @@
 
 
 import { Button } from "@/components/ui/button";
-
+import ChatLayout from "./Chat"
 import PaperCard from "../display/PaperCardDisplay";
 import { useChatContext } from "@/app/src/ChatContext";
 import { chosenPaper } from "@/app/page";
+import { useContext, useState } from "react";
+import { createContext } from "react";
 
 // Features.generateSummary("ww.google.com")
+
+
+// SideBarcontext is used to switch between sidebars
+const SideBarContext = createContext<SideBarMethods | undefined>(undefined);
+interface SideBarMethods {
+    openNavigation: () => void;
+    openChat: () => void;
+}
+export const useSideBarContext = () => {
+    const context = useContext(SideBarContext);
+    if (!context) {
+        throw new Error("SideBarContext must be used within appropriate provider")
+    }
+    return context
+}
 
 export function Sidebar({
   selectedPaper,
@@ -21,67 +38,33 @@ export function Sidebar({
   chosenPapers: chosenPaper[];
   setChosenPapers: (papers: chosenPaper[]) => void;
 }) {
-  // Sidebar is to be used for conversing with the llm and operating on the graph.
-//   const generateSummary = async function (
-//     arxiv: string,
-//     pdfLink: string,
-//     callback: () => void,
-//     errorCallback: () => void,
-//   ) {
-//     //FIXME: move api requests? use contex?
-//     const id: string = nanoid(); // unique identifier for array
-//     try {
-//       addSummaryPrompt(id);
-//       const response = await fetch("/api/generateSummary", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ pdfLink }),
-//       });
-//       if (!response.ok) throw new Error("Failed to generate summary");
-//       const { summary } = await response.json();
-//       const adaptPaper = (paper: chosenPaper) =>
-//         paper.arxiv === arxiv ? { ...paper, summary } : paper;
 
-//       setChosenPapers(chosenPapers.map(adaptPaper));
-//       updateSummaryPrompt(id, summary);
-//       callback(); //used to display response
-//     } catch {
-//       removePrompt(id);
-//       errorCallback(); // use to display error 
-//     }
-//   };
+    const [sidebarTab,setSidebarTab] = useState<"nav"|"chat">("chat");
 
-//   const generateQuestionResponse = async function (
-//     pdfLink: string,
-//     question: string,
-//   ) {
-//     console.log("Generating response");
-//     const id: string = nanoid();
-//     try {
-//       addQuestionPrompt(id, question);
-//       const response = await fetch("/api/generateQuestionResponse", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ pdfLink, question }),
-//       });
-//       if (!response.ok) throw new Error("Error"); //FIXME: display actual error instead
-//       const { questionResponse } = await response.json();
 
-//       updateQuestionPrompt(id, questionResponse);
-//     } catch {
-//       removePrompt(id);
-//     }
-//   };
+    const openNavigation = () => setSidebarTab("nav")
+    const openChat = () => setSidebarTab("chat")
+
+    const contextValue = {
+        openNavigation,
+        openChat
+    }
 
   return (
     <div className="bg-black fixed border-l border-gray-500 right-0 top-0 h-full w-1/4 p-7">
-      <div className="flex justify-between">
+      <div className="flex justify-between mb-8">
         <Button variant={"secondary"} onClick={onClose}>
           Close
         </Button>
-        <Button variant={"secondary"}>Chat</Button>
+        {
+        sidebarTab === "nav"?
+        <Button variant={"secondary"} onClick={openChat}>Chat</Button>:
+        <Button variant={"secondary"} onClick={openNavigation}>Navigate</Button>
+        }
       </div>
-      <div className="mt-8 grid grid-cols-1 gap-4">
+      <SideBarContext.Provider value={contextValue}>
+      {sidebarTab === "nav"?
+      <div className="grid grid-cols-1 gap-4">
         {chosenPapers.map((paper) => (
           <PaperCard
             key={paper.arxiv}
@@ -102,7 +85,18 @@ export function Sidebar({
             }
           />
         ))}
-      </div>
+      </div>:
+        <ChatLayout></ChatLayout>
+        }
+        </SideBarContext.Provider>
     </div>
   );
 }
+
+// function ChatLayout() {
+//     const {chatHistory} = useChatContext();
+
+//     console.log(chatHistory)
+
+//     return <div className="mt-8 grid grid-cols-1 gap-4">Chat</div>
+// }

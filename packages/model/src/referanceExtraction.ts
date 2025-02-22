@@ -1,9 +1,10 @@
-import { generateObject,generateText } from "ai";
+import { generateObject,generateText, streamText } from "ai";
 import { geminiModel } from "./config.js";
-import { EXTRACTING_REFERENCES_PROMPT, CONNECTION_GENERATION_PROMPT_WO_QUESTION,CONNECTION_GENERATION_PROMPT_W_QUESTION,SUMMARY_GENERATION_PROMPT} from "./prompt.js";
+import { EXTRACTING_REFERENCES_PROMPT, CONNECTION_GENERATION_PROMPT_WO_QUESTION,CONNECTION_GENERATION_PROMPT_W_QUESTION,SUMMARY_GENERATION_PROMPT,QUESTION_ON_PAPER_PROMPT} from "./prompt.js";
 import { type reference, type paperInfo, INFORMATION_EXTRACTION_SCHEMA } from "./config.js";
 import PaperInfoFormatter from "./format.js"
-import { string } from "zod";
+
+const GEMINI_MODEL_NAME = "gemini-2.0-flash-exp"
 
 // Helper function to map references
 function mapReferences(refs: any[]): reference[] {
@@ -19,7 +20,7 @@ function mapReferences(refs: any[]): reference[] {
 export async function extractInformation(paper: string): Promise<paperInfo> {
     const generatedPrompt = EXTRACTING_REFERENCES_PROMPT.replace("{paper}", paper);
     const { object } = await generateObject({
-        model: geminiModel('gemini-2.0-flash-exp'),
+        model: geminiModel(GEMINI_MODEL_NAME),
         schema: INFORMATION_EXTRACTION_SCHEMA,
         prompt: generatedPrompt
     });
@@ -52,21 +53,32 @@ export async function generateConnectionDetails(referencingPaper: string, refere
     }
 
     const {text} = await generateText({
-        model: geminiModel('gemini-2.0-flash-exp'),
+        model: geminiModel(GEMINI_MODEL_NAME),
         prompt: generatedPrompt
     });
     return text
 }
 
 
-export async function generateSummary(paper: string) {
+export function generateSummary(paper: string) {
     const prompt: string = SUMMARY_GENERATION_PROMPT.replace("{paper}",paper)
 
-    const {text} = await generateText({
-        model: geminiModel('gemini-2.0-flash-exp'),
+    const result = streamText({
+        system: 'You are a helpful assistant. Respond to the user in Markdown format.',
+        model: geminiModel(GEMINI_MODEL_NAME),
         prompt: prompt
     })
-
-    return text
+    return result
 }
 
+
+export function generateQuestionResponse(question:string,paper:string) {
+    const prompt: string = QUESTION_ON_PAPER_PROMPT.replace("{question}",question).replace("{paper}",paper);
+
+    const result =  streamText({   
+         system:'You are a helpful assistant. Respond to the user in Markdown format.',
+        model: geminiModel(GEMINI_MODEL_NAME),
+        prompt: prompt
+    })
+    return result
+}

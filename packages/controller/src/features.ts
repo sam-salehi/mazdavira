@@ -1,10 +1,11 @@
 
 import NeoAccessor from "@repo/db/neo"
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js"
-import { generateConnectionDetails,generateSummary } from "@repo/model/src/referanceExtraction.js"
+import { generateConnectionDetails,generateSummary ,generateQuestionResponse} from "@repo/model/src/referanceExtraction.js"
 
 export default class Features {
     public static async findConnection(title1:string, title2:string): Promise<string> {
+        // TODO: figure out what to do with these (probs disregard)
         return await this.findConnectionWithQuestion(title1,title2,"")
     }
 
@@ -17,8 +18,6 @@ export default class Features {
         const [link1, link2] = await Promise.all([NeoAccessor.getPaperPDFLink(title1),NeoAccessor.getPaperPDFLink(title2)])
         // fetch pdf from these pdf urls
 
-        console.log(link1)
-        console.log(link2)
 
         const [pdf1, pdf2] = await Promise.all([PaperExtractor.extractBody(link1),PaperExtractor.extractBody(link2)])
 
@@ -27,12 +26,17 @@ export default class Features {
         return response
     }
 
-
-    public static async generateSummary(pdfLink:string): Promise<string> {
+    public static async generateSummary(pdfLink:string) {
         // makes a summary of paper at link from model
         const paperPDF = await PaperExtractor.fetchPDF(pdfLink)
-        const summary = await generateSummary(paperPDF)
+        const summary =  generateSummary(paperPDF)
         return summary
+    }
+
+    public static async generateQuestionResponse(pdfLink:string,question:string){
+        const paperPDF = await PaperExtractor.fetchPDF(pdfLink);
+        const response =  generateQuestionResponse(question,paperPDF)
+        return response
     }
 
 }
