@@ -2,7 +2,6 @@
 
 import { useChat } from '@ai-sdk/react';
 import { MemoizedMarkdown } from '../display/MarkdownDisplay';
-import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { useEffect, useRef } from 'react';
 
@@ -44,18 +43,26 @@ const MessageInput = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault()
-        handleSubmit()
+      e.preventDefault();
+      
+      // Create the body object
+      const body = { type: "chat", messages: [{ role: 'user', content: input }] }; // Include messages
+
+      handleSubmit({},{
+          body: {
+            type: "chat",
+          },
+      }); // Pass the body object to handleSubmit
     }
-  }
+  };
 
   useEffect(() => {
     handleResize();
   }, [input]);
 
   return (
-    <form onSubmit={handleSubmit}>
-      <textarea
+    <form>
+      <Textarea
         ref={textareaRef}
         className="w-[95%] absolute bottom-6 p-2 rounded shadow-xl resize-none"
         placeholder="Say something..."
