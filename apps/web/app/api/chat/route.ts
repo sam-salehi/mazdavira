@@ -13,9 +13,10 @@ type routeBody = {
   pdfLink?:string
 }  | any
 
+// POST at api/chat path is called through useChat hook
 export async function POST(req: Request) {
-
-  const resJson:routeBody = await req.json();
+  console.log("Called ")
+  const resJson:routeBody = await req.json(); 
   const {messages, type} = resJson
   console.log(resJson)
 
@@ -28,9 +29,11 @@ export async function POST(req: Request) {
       messages,
     });
   } else if (type === "summary") {
+    console.log("summarizing")
+    console.log(resJson.pdfLink)
     result = await Features.generateSummary(resJson.pdfLink)
   }  else {
-    result = await Features.generateSummary(resJson.pdfLink) //TODO: change to question answering
+    result = await Features.generateQuestionResponse(resJson.pdfLink,resJson.question) //TODO: change to question answering
   }
 
 

@@ -14,6 +14,8 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useChatContext } from "@/app/src/ChatContext";
+import { useChat } from '@ai-sdk/react';
+
 
 import {X} from "lucide-react"
 import { useSideBarContext } from "../layouts/SideBar";
@@ -75,9 +77,9 @@ function FullPaperCard({
 
   const {generateSummary, generateQuestionResponse} = useChatContext();
   const {openChat} = useSideBarContext();
+  const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
 
   const handleSummaryGeneration = function () {
-    console.log("Handling")
     generateSummary(
       arxivID,
       link

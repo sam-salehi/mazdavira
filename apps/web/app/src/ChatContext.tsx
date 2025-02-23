@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { nanoid } from "nanoid";
+import { useChat } from '@ai-sdk/react';
+import { SettingsIcon } from "lucide-react";
+import { config } from "dotenv";
 
+
+// FIXME: figure out wether you want to keep all this mess for storage or can just use aiSDL
 type responseType = "summary" | "question-response";
 type responseStatus = "displayed" | "fetching"; // add fetched state later
 export type llmResponse = {
@@ -77,9 +82,10 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     arxiv: string,
     pdfLink: string,
   ) {
+    console.log("Calling genSumm")
+    return
     const id: string = nanoid(); // unique identifier for array
     try {
-        console.log("Sending post")
       addSummaryPrompt(id);
       const response = await fetch("/api/generateSummary", {
         method: "POST",
@@ -95,6 +101,21 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       removePrompt(id);
     }
   };
+
+  // const { handleSubmit,messages } = useChat({ id: 'chat' }); //TODO: move down to where button is pressed
+  // // TODO:L figure out how to make this work
+  //   const generateSummary2 = async function (
+  //     pdfLink: string
+  //   ) {
+
+  //     const configFunction = (userMessage: string) => {
+  //       return {
+  //         messages: [...messages, { content: userMessage, role: 'user' }],
+  //         body: { type: 'summary', pdfLink: pdfLink }
+  //       }
+  //     }
+  //     handleSubmit()
+  //   }
 
   const generateQuestionResponse = async function (
     pdfLink: string,
