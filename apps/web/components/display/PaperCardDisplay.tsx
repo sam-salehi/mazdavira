@@ -77,7 +77,7 @@ function FullPaperCard({
 
   const {generateSummary, generateQuestionResponse} = useChatContext();
   const {openChat} = useSideBarContext();
-  const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
+  // const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
 
   const handleSummaryGeneration = function () {
     generateSummary(

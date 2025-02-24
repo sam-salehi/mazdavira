@@ -67,6 +67,9 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     ]);
   };
 
+
+  //TODO: start by removing useChat hooks and adding normal chat here.
+
   const updateQuestionPrompt = (id: string, response: string) => {
     setChatHistory(
       chatHistory.map((prompt) =>
@@ -82,8 +85,6 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     arxiv: string,
     pdfLink: string,
   ) {
-    console.log("Calling genSumm")
-    return
     const id: string = nanoid(); // unique identifier for array
     try {
       addSummaryPrompt(id);
@@ -102,7 +103,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  // const { handleSubmit,messages } = useChat({ id: 'chat' }); //TODO: move down to where button is pressed
+  // const { handleSubmit,messages } = useChat({ id: 'chat' });
   // // TODO:L figure out how to make this work
   //   const generateSummary2 = async function (
   //     pdfLink: string
