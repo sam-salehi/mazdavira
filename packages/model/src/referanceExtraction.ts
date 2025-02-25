@@ -60,25 +60,42 @@ export async function generateConnectionDetails(referencingPaper: string, refere
 }
 
 
-export function generateSummary(paper: string) {
+export async function generateSummary(paper: string):Promise<string>{
     const prompt: string = SUMMARY_GENERATION_PROMPT.replace("{paper}",paper)
 
-    const result = streamText({
+    const result = await generateText({
         system: 'You are a helpful assistant. Respond to the user in Markdown format.',
         model: geminiModel(GEMINI_MODEL_NAME),
         prompt: prompt
     })
-    return result
+    return result.text
 }
 
 
-export function generateQuestionResponse(question:string,paper:string) {
+export async function generateQuestionResponse(question:string,paper:string):Promise<string> {
     const prompt: string = QUESTION_ON_PAPER_PROMPT.replace("{question}",question).replace("{paper}",paper);
 
-    const result =  streamText({   
+    const result =  await generateText({   
          system:'You are a helpful assistant. Respond to the user in Markdown format.',
         model: geminiModel(GEMINI_MODEL_NAME),
         prompt: prompt
     })
-    return result
+    return result.text
+}
+
+
+
+
+import type { CoreAssistantMessage, CoreUserMessage } from "ai";
+export type HistoryMessage = CoreAssistantMessage | CoreUserMessage
+
+export async function generateBasicResponse(history:HistoryMessage[]) {
+
+    const result =  await generateText({   
+        system:'You are a helpful assistant. Respond to the user in Markdown format.',
+       model: geminiModel(GEMINI_MODEL_NAME),
+       messages:history
+   })
+
+   return result.text
 }

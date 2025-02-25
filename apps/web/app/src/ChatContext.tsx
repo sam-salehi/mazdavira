@@ -25,7 +25,7 @@ export type llmResponse = {
   status: responseStatus;
 };
 
-type ChatItem = llmResponse | userQuery
+export type ChatItem = llmResponse | userQuery
 
 interface ChatPromptType {
   chatHistory: ChatItem[];
@@ -57,29 +57,34 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   }
 
   const addSummaryPrompt = (id: string) => {
+    const query: userQuery = { id: id,role:"user", queryType: "summary", prompt:"//FIXME:  generate a small string resembling prompt"}
     setChatHistory([
       ...chatHistory,
-      { id: id,role:"user", queryType: "summary", prompt:"//FIXME:  generate a small string resembling prompt"},
+      query 
     ]);
+    return query
   };
   
 
   const addQuestionPrompt = (id: string, question: string) => {
+    const query:userQuery = {
+      id: id,
+      role:"user",
+      queryType:"question",
+      prompt: question,
+    }
     setChatHistory([
       ...chatHistory,
-      {
-        id: id,
-        role:"user",
-        queryType:"question",
-        prompt: question,
-      },
+      query
     ]);
+    return query
   };
 
-  const addLLMResponse = (id:string,response:string) => {
+  const addLLMResponse = (id:string,query:userQuery,response:string) => {
     // added when response is fully fetched. before this, need to laod text as is being generated
     setChatHistory([
       ...chatHistory,
+      query,
       {
         id:id,
         role:"bot",
@@ -89,22 +94,6 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     ])
   }
 
-  // const updatePrompt = (id: string, response: string) => { //FIXME: delete this
-  //   // used to set any type of sent prompt to displaying to begin
-  //   // loading the message onto the screen
-  //   setChatHistory([...chatHistory,{
-  //     id: id, type:"question-response" ,role:"bot", status:"displaying", response:response 
-  //   }])
-  //   // setChatHistory(
-  //   //   chatHistory.map((prompt) =>
-  //   //     prompt.id === id
-  //   //       ? { ...prompt, status: "displaying", response: response }
-  //   //       : prompt,
-  //   //   ),
-  //   // );
-  // };
-
-  
 
   const convertToHistoryMessage = function(conv: ChatItem): HistoryMessage | null {
     // takes a ChatItem and turns into proper format to be fed into model as history
@@ -131,8 +120,6 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     // includes history of previous conversations with prompt.
     const id: string = nanoid();
     try {
-      // addBasicPrompt is added to chat history before generateHistory is called
-      // this includes it in generateHistory
       const history: HistoryMessage[] = generateHistory(10); 
       const query: userQuery = addBasicPrompt(id,prompt)  
       const queryMessage  = convertToHistoryMessage(query)
@@ -148,6 +135,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       if (!response.ok) throw new Error("Failed to generate response")
         const {result} = await response.json();
       console.log("Post response", result)
+      addLLMResponse(nanoid(),query,result)
     } catch {
       removePrompt(id)
     }
@@ -159,7 +147,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   ) {
     const id: string = nanoid(); // unique identifier for array
     try {
-      addSummaryPrompt(id);
+      const query = addSummaryPrompt(id);
       const response = await fetch("/api/generateSummary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,9 +155,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       });
       if (!response.ok) throw new Error("Failed to generate summary");
       const { result } = await response.json();
-      console.log("Post response", result);
-      addLLMResponse(id,result)
-    //   setChosenPapers(chosenPapers.map(adaptPaper));
+      addLLMResponse(nanoid(),query,result)
     } catch {
       removePrompt(id);
     }
@@ -182,7 +168,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   ) {
     const id: string = nanoid();
     try {
-      addQuestionPrompt(id, question);
+      const query = addQuestionPrompt(id, question);
       const response = await fetch("/api/generateQuestionResponse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,7 +176,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       });
       if (!response.ok) throw new Error("Error");
       const { result } = await response.json();
-      addLLMResponse(id,result)
+      addLLMResponse(nanoid(),query,result)
     } catch {
       removePrompt(id);
     }
@@ -198,11 +184,6 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
 
   const value = {
     chatHistory,
-    // addSummaryPrompt,
-    // updateSummaryPrompt,
-    // addQuestionPrompt,
-    // updateQuestionPrompt,
-    // removePrompt,
     generateSummary,
     generateQuestionResponse,
     generateResponse
@@ -214,7 +195,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
 export const useChatContext = () => {
   const context = useContext(ChatContext);
   if (!context) {
-    throw new Error("useChatContext must be used within a ChantHistoryProvider");
+    throw new Error("useChatContext must be used within a ChatHistoryProvider");
   }
   return context;
 };

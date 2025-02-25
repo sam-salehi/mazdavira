@@ -1,7 +1,9 @@
 
 import NeoAccessor from "@repo/db/neo"
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js"
-import { generateConnectionDetails,generateSummary ,generateQuestionResponse} from "@repo/model/src/referanceExtraction.js"
+import { generateConnectionDetails,generateSummary ,generateQuestionResponse, generateBasicResponse} from "@repo/model/src/referanceExtraction.js"
+import type { CoreAssistantMessage, CoreUserMessage } from "ai";
+type HistoryMessage = CoreAssistantMessage | CoreUserMessage
 
 export default class Features {
     public static async findConnection(title1:string, title2:string): Promise<string> {
@@ -26,17 +28,26 @@ export default class Features {
         return response
     }
 
-    public static async generateSummary(pdfLink:string) {
+
+    public static async generateBasicResponse(history:HistoryMessage[]):Promise<string> {
+        const response = await generateBasicResponse(history)
+        return response
+    }
+
+    public static async generateSummary(pdfLink:string):Promise<string> {
         // makes a summary of paper at link from model
         const paperPDF = await PaperExtractor.fetchPDF(pdfLink)
-        const summary =  generateSummary(paperPDF)
+        const summary =  await generateSummary(paperPDF)
         return summary
     }
 
-    public static async generateQuestionResponse(pdfLink:string,question:string){
+    public static async generateQuestionResponse(pdfLink:string,question:string):Promise<string>{
         const paperPDF = await PaperExtractor.fetchPDF(pdfLink);
-        const response =  generateQuestionResponse(question,paperPDF)
+        const response =  await generateQuestionResponse(question,paperPDF)
         return response
     }
+
+
+
 
 }

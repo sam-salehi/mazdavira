@@ -3,28 +3,34 @@
 
 import { MemoizedMarkdown } from '../display/MarkdownDisplay';
 import { Textarea } from '../ui/textarea';
-import { useChatContext } from '@/app/src/ChatContext';
+import { ChatItem, useChatContext } from '@/app/src/ChatContext';
 
 import { useEffect, useRef, useState } from 'react';
-import { useChat } from '@ai-sdk/react';
 
 
 
 export default function ChatLayout() {
-  const { messages } = useChat({
-    id: 'chat',
-  });
+
+    const {chatHistory} = useChatContext()
+
+
+    const fetchContent = function(message: ChatItem ): string {
+        if (message.role === "user") return message.prompt
+        if (message.response) return message.response
+        return ""
+    }
+
 
   return (
     <div className="relative flex flex-col w-full h-[95%] mx-auto stretch rounded-lg">
       <div className="space-y-4 rounded-lg mb-2 h-[88%] px-2 pt-4 bg-white overflow-scroll hide-scrollbar">
-        {messages.map(message => (
+        {chatHistory.map(message => (
           <div key={message.id}>
             <div className="font-bold mb-2">
               {message.role === 'user' ? 'You' : 'Assistant'}
             </div>
             <div className="prose space-y-2">
-              <MemoizedMarkdown id={message.id} content={message.content} />
+              <MemoizedMarkdown id={message.id} content={fetchContent(message)} />
             </div>
           </div>
         ))}
