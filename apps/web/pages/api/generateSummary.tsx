@@ -11,7 +11,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing pdfLink" });
     }
     const result = await Features.generateSummary(pdfLink);
-    res.status(200).send(result.toDataStreamResponse());
+    console.log("Returning Result",result)
+    res.status(200).json({result});
   } catch (error) {
     console.error("Error generating summary:", error);
     res.status(500).json({ error: "Internal Server Error" });

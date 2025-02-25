@@ -13,11 +13,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Mussing question" });
     }
 
-    const questionResponse = await Features.generateQuestionResponse(
+    const result = await Features.generateQuestionResponse(
       pdfLink,
       question,
     );
-    res.status(200).json({ questionResponse });
+    res.status(200).json({ result });
   } catch (error) {
     console.error("Error generating question response:", error);
     res.status(500).json({ error: "Internal Server Error" });

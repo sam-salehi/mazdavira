@@ -14,7 +14,6 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useChatContext } from "@/app/src/ChatContext";
-import { useChat } from '@ai-sdk/react';
 
 
 import {X} from "lucide-react"
