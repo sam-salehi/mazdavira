@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/button";
 import ChatLayout from "./Chat"
 import PaperCard from "../display/PaperCardDisplay";
-import { useChatContext } from "@/app/src/ChatContext";
 import { chosenPaper } from "@/app/page";
 import { useContext, useState } from "react";
 import { createContext } from "react";

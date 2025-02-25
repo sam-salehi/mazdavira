@@ -4,7 +4,6 @@ import type { CoreAssistantMessage, CoreUserMessage } from "ai";
 
 // TODO: make react state that gets toggled when prompt gets sent 
 //       and when prompt recieves an answer. (figure out how to stream responses)
-// TODO: 
 type QueryType = "summary" | "question" | "basic";
 type responseStatus = "displayed" |  "displaying"; // removed "fetching"
 type HistoryMessage = CoreAssistantMessage | CoreUserMessage
@@ -29,6 +28,7 @@ export type ChatItem = llmResponse | userQuery
 
 interface ChatPromptType {
   chatHistory: ChatItem[];
+  generatingResponse:boolean,
   generateSummary: (arxiv:string,pdfLink:string)=>void     
   generateQuestionResponse: (pdfLink:string,question:string)=>void,
   generateResponse: (prompt:string) => void,
@@ -40,9 +40,14 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
+  
+
+  const [generatingResponse,setGeneratingResponse] = useState<boolean>(false); // true when api's are called to make response
+
+
 
   const removePrompt = (id: string) => {
-    // setChatHistory(chatHistory.filter((prompt) => prompt.id !== id)); //FIXME: uncommet after debugging
+    setChatHistory(chatHistory.filter((prompt) => prompt.id !== id)); 
   };
 
 
@@ -56,35 +61,29 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     return query
   }
 
-  const addSummaryPrompt = (id: string) => {
-    const query: userQuery = { id: id,role:"user", queryType: "summary", prompt:"//FIXME:  generate a small string resembling prompt"}
-    setChatHistory([
-      ...chatHistory,
-      query 
+  const addSummaryPrompt = (id: string,title:string) => {
+    setChatHistory((prevChatHistory) => [
+      ...prevChatHistory,
+      { id: id,role:"user", queryType: "summary", prompt:`Could you summarize "${title}".`}
     ]);
-    return query
   };
-  
 
   const addQuestionPrompt = (id: string, question: string) => {
-    const query:userQuery = {
-      id: id,
-      role:"user",
-      queryType:"question",
-      prompt: question,
-    }
-    setChatHistory([
-      ...chatHistory,
-      query
+    setChatHistory((prevChatHistory)=>[
+      ...prevChatHistory,
+      {
+        id: id,
+        role:"user",
+        queryType:"question",
+        prompt: question,
+      }
     ]);
-    return query
   };
 
-  const addLLMResponse = (id:string,query:userQuery,response:string) => {
+  const addLLMResponse = (id:string,response:string) => {
     // added when response is fully fetched. before this, need to laod text as is being generated
-    setChatHistory([
-      ...chatHistory,
-      query,
+    setChatHistory(prevChatHistory => [
+      ...prevChatHistory,
       {
         id:id,
         role:"bot",
@@ -124,9 +123,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       const query: userQuery = addBasicPrompt(id,prompt)  
       const queryMessage  = convertToHistoryMessage(query)
       if (queryMessage) history.push(queryMessage);
-
-
-
+      setGeneratingResponse(true)
       const response = await fetch("api/generateBasicResponse", {
         method:"POST",
         headers: { "Content-Type": "application/json" },
@@ -134,20 +131,21 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       })
       if (!response.ok) throw new Error("Failed to generate response")
         const {result} = await response.json();
-      console.log("Post response", result)
-      addLLMResponse(nanoid(),query,result)
+      addLLMResponse(nanoid(),result)
+      setGeneratingResponse(false)
     } catch {
       removePrompt(id)
     }
   }
 
   const generateSummary = async function (
-    arxiv: string,
+    title: string,
     pdfLink: string,
   ) {
     const id: string = nanoid(); // unique identifier for array
     try {
-      const query = addSummaryPrompt(id);
+      addSummaryPrompt(id,title);
+      setGeneratingResponse(true)
       const response = await fetch("/api/generateSummary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +153,8 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       });
       if (!response.ok) throw new Error("Failed to generate summary");
       const { result } = await response.json();
-      addLLMResponse(nanoid(),query,result)
+      addLLMResponse(nanoid(),result)
+      setGeneratingResponse(false)
     } catch {
       removePrompt(id);
     }
@@ -168,7 +167,8 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   ) {
     const id: string = nanoid();
     try {
-      const query = addQuestionPrompt(id, question);
+      addQuestionPrompt(id, question);
+      setGeneratingResponse(true)
       const response = await fetch("/api/generateQuestionResponse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,7 +176,8 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       });
       if (!response.ok) throw new Error("Error");
       const { result } = await response.json();
-      addLLMResponse(nanoid(),query,result)
+      addLLMResponse(nanoid(),result)
+      setGeneratingResponse(false)
     } catch {
       removePrompt(id);
     }
@@ -184,6 +185,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
 
   const value = {
     chatHistory,
+    generatingResponse,
     generateSummary,
     generateQuestionResponse,
     generateResponse

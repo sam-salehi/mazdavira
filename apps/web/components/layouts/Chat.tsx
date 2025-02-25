@@ -1,17 +1,17 @@
 'use client';
 
-
-import { MemoizedMarkdown } from '../display/MarkdownDisplay';
-import { Textarea } from '../ui/textarea';
-import { ChatItem, useChatContext } from '@/app/src/ChatContext';
-
 import { useEffect, useRef, useState } from 'react';
+
+import { ChatItem, useChatContext } from '@/app/src/ChatContext';
+import { Textarea } from '../ui/textarea';
+import GeneratingResponseDisplay from '../display/GeneratingResponseDisplay';
+import { MemoizedMarkdown } from '../display/MarkdownDisplay';
 
 
 
 export default function ChatLayout() {
 
-    const {chatHistory} = useChatContext()
+    const {chatHistory,generatingResponse} = useChatContext()
 
 
     const fetchContent = function(message: ChatItem ): string {
@@ -34,11 +34,16 @@ export default function ChatLayout() {
             </div>
           </div>
         ))}
+        {generatingResponse && <GeneratingResponseDisplay />}
       </div>
       <MessageInput />
     </div>
   );
 }
+
+
+
+
 
 const MessageInput = () => {
 

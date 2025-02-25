@@ -80,7 +80,7 @@ function FullPaperCard({
 
   const handleSummaryGeneration = function () {
     generateSummary(
-      arxivID,
+      title,
       link
     );
     openChat();
