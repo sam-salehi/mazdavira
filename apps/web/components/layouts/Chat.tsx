@@ -1,9 +1,14 @@
 'use client';
 
-import { useChat } from '@ai-sdk/react';
+
 import { MemoizedMarkdown } from '../display/MarkdownDisplay';
 import { Textarea } from '../ui/textarea';
-import { useEffect, useRef } from 'react';
+import { useChatContext } from '@/app/src/ChatContext';
+
+import { useEffect, useRef, useState } from 'react';
+import { useChat } from '@ai-sdk/react';
+
+
 
 export default function ChatLayout() {
   const { messages } = useChat({
@@ -30,12 +35,14 @@ export default function ChatLayout() {
 }
 
 const MessageInput = () => {
-  const { input, handleSubmit, handleInputChange } = useChat({api:"/api/chat" , id: 'chat',       body: {
-    type: "chat",
-  }, },);
+
+    const [input,setInput] = useState<string>("")
+
+    const {generateResponse} = useChatContext()
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleResize = () => {
+  const handleResize = () => {// used to make text input get taller to keep text in view
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight+5}px`;
@@ -45,7 +52,10 @@ const MessageInput = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      if (input) {
+        generateResponse(input);
+        setInput("")
+      }
     }
   };
 
@@ -60,7 +70,7 @@ const MessageInput = () => {
         className="w-[95%] bg-white absolute bottom-6 p-2 rounded shadow-xl resize-none"
         placeholder="Say something..."
         value={input}
-        onChange={handleInputChange}
+        onChange={(e)=>setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         rows={1}
         style={{ height: 'auto' }}

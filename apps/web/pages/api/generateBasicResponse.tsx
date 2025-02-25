@@ -6,15 +6,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).json({ error: "Method Not Allowed" });
     }
     try {
-      const { prompt, history } = req.body;
-      if (!prompt) {
-        return res.status(400).json({ error: "Missing a prompt" });
-      } else if (!history) {
+      const { history } = req.body;
+
+      if (!history) {
         return res.status(400).json({ error: "Missing history" });
       }
   
       const result = await Features.generateBasicResponse(
-        prompt,
         history
       );
 

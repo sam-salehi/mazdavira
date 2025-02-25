@@ -42,16 +42,18 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
 
   const removePrompt = (id: string) => {
-    setChatHistory(chatHistory.filter((prompt) => prompt.id !== id));
+    // setChatHistory(chatHistory.filter((prompt) => prompt.id !== id)); //FIXME: uncommet after debugging
   };
 
 
 
-  const addBasicPrompt = (id:string,prompt:string) => {
+  const addBasicPrompt = (id:string,prompt:string):userQuery => {
+    const query: userQuery = {id:id,role:"user",queryType:"basic",prompt}
     setChatHistory([
       ...chatHistory,
-      {id:id,role:"user",queryType:"basic",prompt}
+      query
     ])
+    return query
   }
 
   const addSummaryPrompt = (id: string) => {
@@ -129,12 +131,19 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     // includes history of previous conversations with prompt.
     const id: string = nanoid();
     try {
-      const history: HistoryMessage[] = generateHistory(5);
-      addBasicPrompt(id,prompt)
+      // addBasicPrompt is added to chat history before generateHistory is called
+      // this includes it in generateHistory
+      const history: HistoryMessage[] = generateHistory(10); 
+      const query: userQuery = addBasicPrompt(id,prompt)  
+      const queryMessage  = convertToHistoryMessage(query)
+      if (queryMessage) history.push(queryMessage);
+
+
+
       const response = await fetch("api/generateBasicResponse", {
         method:"POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({prompt,history}),
+        body: JSON.stringify({history}),
       })
       if (!response.ok) throw new Error("Failed to generate response")
         const {result} = await response.json();
