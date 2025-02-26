@@ -5,20 +5,13 @@ import { useEffect, useRef, useState } from 'react';
 import { ChatItem, useChatContext } from '@/app/src/ChatContext';
 import { Textarea } from '../ui/textarea';
 import GeneratingResponseDisplay from '../display/GeneratingResponseDisplay';
-import { MemoizedMarkdown } from '../display/MarkdownDisplay';
+import  MarkdownStreamer  from '../display/MarkdownDisplay';
 
 
 
 export default function ChatLayout() {
 
-    const {chatHistory,generatingResponse} = useChatContext()
-
-
-    const fetchContent = function(message: ChatItem ): string {
-        if (message.role === "user") return message.prompt
-        if (message.response) return message.response
-        return ""
-    }
+    const {chatHistory,generatingResponse,setResponseToDisplayed} = useChatContext()
 
 
   return (
@@ -30,7 +23,7 @@ export default function ChatLayout() {
               {message.role === 'user' ? 'You' : 'Assistant'}
             </div>
             <div className="prose space-y-2">
-              <MemoizedMarkdown id={message.id} content={fetchContent(message)} />
+              <MarkdownStreamer key={message.id} id={message.id} status={message.role === "assistant"?  message.status : null}text={message.text} onFinishedDisplaying={setResponseToDisplayed}/>
             </div>
           </div>
         ))}

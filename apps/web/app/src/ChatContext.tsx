@@ -5,7 +5,7 @@ import type { CoreAssistantMessage, CoreUserMessage } from "ai";
 // TODO: make react state that gets toggled when prompt gets sent 
 //       and when prompt recieves an answer. (figure out how to stream responses)
 type QueryType = "summary" | "question" | "basic";
-type responseStatus = "displayed" |  "displaying"; // removed "fetching"
+export type responseStatus = "displayed" |  "displaying"; // removed "fetching"
 type HistoryMessage = CoreAssistantMessage | CoreUserMessage
 
 
@@ -13,14 +13,14 @@ type HistoryMessage = CoreAssistantMessage | CoreUserMessage
 export type userQuery = {
   id:string,
   role:"user"
+  text: string 
   queryType: QueryType
-  prompt: string 
 }
 
 export type llmResponse = {
   id: string;
-  role: "bot";
-  response?: string;
+  role: "assistant";
+  text: string;
   status: responseStatus;
 };
 
@@ -32,6 +32,7 @@ interface ChatPromptType {
   generateSummary: (arxiv:string,pdfLink:string)=>void     
   generateQuestionResponse: (pdfLink:string,question:string)=>void,
   generateResponse: (prompt:string) => void,
+  setResponseToDisplayed: (id:string) =>void
 }
 
 const ChatContext = createContext<ChatPromptType | undefined>(undefined);
@@ -53,7 +54,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
 
 
   const addBasicPrompt = (id:string,prompt:string):userQuery => {
-    const query: userQuery = {id:id,role:"user",queryType:"basic",prompt}
+    const query: userQuery = {id:id,role:"user",queryType:"basic",text:prompt}
     setChatHistory([
       ...chatHistory,
       query
@@ -64,7 +65,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
   const addSummaryPrompt = (id: string,title:string) => {
     setChatHistory((prevChatHistory) => [
       ...prevChatHistory,
-      { id: id,role:"user", queryType: "summary", prompt:`Could you summarize "${title}".`}
+      { id: id,role:"user", queryType: "summary", text:`Could you summarize "${title}".`}
     ]);
   };
 
@@ -75,7 +76,7 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
         id: id,
         role:"user",
         queryType:"question",
-        prompt: question,
+        text: question,
       }
     ]);
   };
@@ -86,19 +87,29 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
       ...prevChatHistory,
       {
         id:id,
-        role:"bot",
-        response: response,
-        status: "displayed"
+        role:"assistant",
+        text: response,
+        status: "displaying"
       }
     ])
   }
 
+  const setResponseToDisplayed = (id: string) => {
+    // called after front end has rendered the entire string onto screen
+    setChatHistory(prevChatHistory => 
+        prevChatHistory.map(chat => 
+            chat.id === id ? { ...chat, status: "displayed" } : chat
+        )
+    );
+  };
+
+
 
   const convertToHistoryMessage = function(conv: ChatItem): HistoryMessage | null {
     // takes a ChatItem and turns into proper format to be fed into model as history
-    if (conv.role === "user") return {role: "user", content:conv.prompt}
-    if (conv.role === "bot" && conv.response) return {role:"assistant",content:conv.response}
-    return null
+    // if (conv.role === "user") return {role: "user", content:conv.text}
+    // if (conv.role === "bot") return {role:"assistant",content:conv.text}
+    return {role:conv.role, content:conv.text}
   }
 
   const generateHistory = function(count:number): HistoryMessage[] {
@@ -188,7 +199,8 @@ export const ChantHistoryProvider: React.FC<{ children: ReactNode }> = ({
     generatingResponse,
     generateSummary,
     generateQuestionResponse,
-    generateResponse
+    generateResponse,
+    setResponseToDisplayed
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
