@@ -20,7 +20,6 @@ function Navbar({
           id={paper.arxiv}
           title={paper.title}
           authors={paper.authors}
-          summary={paper.summary}
           year={paper.year}
           link={paper.link}
           selected={selectedPaper === paper.arxiv}

@@ -16,7 +16,6 @@ export type chosenPaper = {
   title: string;
   year: number;
   authors: string[];
-  summary?: string;
   link: string;
   arxiv: string;
 };
