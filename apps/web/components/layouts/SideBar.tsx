@@ -1,28 +1,13 @@
-
-
 import { Button } from "@/components/ui/button";
-import ChatLayout from "./Chat"
-import PaperCard from "../display/PaperCardDisplay";
+import ChatLayout from "./Chat";
+import Navbar from "./Navbar";
 import { chosenPaper } from "@/app/page";
-import { useContext, useState } from "react";
-import { createContext } from "react";
+import { SearchInput } from "./SearchBar";
+import SearchSideBar from "./SearchBar";
+import { SearchContextProvider } from "@/app/src/SearchContext";
+import { useSideBarContext } from "@/app/src/SideBarContext";
 
 // Features.generateSummary("ww.google.com")
-
-
-// SideBarcontext is used to switch between sidebars
-const SideBarContext = createContext<SideBarMethods | undefined>(undefined);
-interface SideBarMethods {
-    openNavigation: () => void;
-    openChat: () => void;
-}
-export const useSideBarContext = () => {
-    const context = useContext(SideBarContext);
-    if (!context) {
-        throw new Error("SideBarContext must be used within appropriate provider")
-    }
-    return context
-}
 
 export function Sidebar({
   selectedPaper,
@@ -38,16 +23,7 @@ export function Sidebar({
   setChosenPapers: (papers: chosenPaper[]) => void;
 }) {
 
-    const [sidebarTab,setSidebarTab] = useState<"nav"|"chat">("chat");
-
-
-    const openNavigation = () => setSidebarTab("nav")
-    const openChat = () => setSidebarTab("chat")
-
-    const contextValue = {
-        openNavigation,
-        openChat
-    }
+  const {sidebarTab,openChat,openNavigation,openSearch} = useSideBarContext()
 
   return (
     <div className="bg-black fixed border-l border-gray-500 right-0 top-0 h-full w-1/4 p-7">
@@ -55,47 +31,32 @@ export function Sidebar({
         <Button variant={"secondary"} onClick={onClose}>
           Close
         </Button>
-        {
-        sidebarTab === "nav"?
-        <Button variant={"secondary"} onClick={openChat}>Chat</Button>:
-        <Button variant={"secondary"} onClick={openNavigation}>Navigate</Button>
-        }
+        {sidebarTab === "nav" ? (
+          <Button variant={"secondary"} onClick={openChat}>
+            Chat
+          </Button>
+        ) : (
+          <Button variant={"secondary"} onClick={openNavigation}>
+            Navigate
+          </Button>
+        )}
       </div>
-      <SideBarContext.Provider value={contextValue}>
-      {sidebarTab === "nav"?
-      <div className="grid grid-cols-1 gap-4">
-        {chosenPapers.map((paper) => (
-          <PaperCard
-            key={paper.arxiv}
-            id={paper.arxiv}
-            title={paper.title}
-            authors={paper.authors}
-            summary={paper.summary}
-            year={paper.year}
-            link={paper.link}
-            selected={selectedPaper === paper.arxiv}
-            onClick={() => onSelectPaper(paper.arxiv)}
-            onClose={() =>
-              setChosenPapers(
-                chosenPapers.length > 1
-                  ? chosenPapers.filter((p) => p.arxiv !== paper.arxiv)
-                  : [],
-              )
-            }
-          />
-        ))}
-      </div>:
-        <ChatLayout></ChatLayout>
+      <SearchContextProvider>
+        {(sidebarTab === "search" || sidebarTab === "nav") && <SearchInput onClick={openSearch} />}
+
+        {sidebarTab === "nav" ? (
+          <Navbar
+            chosenPapers={chosenPapers}
+            selectedPaper={selectedPaper}
+            onSelectPaper={onSelectPaper}
+            setChosenPapers={setChosenPapers}
+          ></Navbar>
+        ) : 
+        sidebarTab=== "chat" ? <ChatLayout></ChatLayout> : <SearchSideBar></SearchSideBar>
         }
-        </SideBarContext.Provider>
+      </SearchContextProvider>
     </div>
   );
 }
 
-// function ChatLayout() {
-//     const {chatHistory} = useChatContext();
 
-//     console.log(chatHistory)
-
-//     return <div className="mt-8 grid grid-cols-1 gap-4">Chat</div>
-// }

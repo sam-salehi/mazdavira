@@ -1,35 +1,45 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
-import { useChatContext } from '@/app/src/ChatContext';
-import { Textarea } from '../ui/textarea';
-import  MarkdownDisplay  from '../display/MarkdownDisplay';
+import { useChatContext } from "@/app/src/ChatContext";
+import { Textarea } from "../ui/textarea";
+import MarkdownDisplay from "../display/MarkdownDisplay";
 
-
+// TODO: theres a problem with the async react calls when generate response gets called too many times.
+// TODO: make it possible to stop fetching something after request.
 
 export default function ChatLayout() {
+  const { chatHistory } = useChatContext();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    const {chatHistory,setResponseToDisplayed} = useChatContext()
-    const chatContainerRef = useRef<HTMLDivElement>(null);
-
-    // scrolls to bottom of screen when something new is added
-    useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    },[chatHistory])
+  // scrolls to bottom of screen when something new is added
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
 
   return (
     <div className="relative flex flex-col w-full h-[95%] mx-auto stretch rounded-lg">
-      <div className="space-y-4 rounded-lg mb-2 h-[88%] px-2 pt-4 bg-white overflow-scroll hide-scrollbar" style={{paddingBottom:"75%"}} ref={chatContainerRef}>
+      <div
+        className="space-y-4 rounded-lg mb-2 h-[88%] px-2 pt-4 bg-white overflow-scroll hide-scrollbar"
+        style={{ paddingBottom: "75%" }}
+        ref={chatContainerRef}
+      >
         {chatHistory.map((message) => (
           <div key={message.id}>
             <div className="font-bold mb-2">
-              {message.role === 'user' ? 'You' : 'Assistant'}
+              {message.role === "user" ? "You" : "Assistant"}
             </div>
             <div className="prose space-y-2">
-              <MarkdownDisplay key={message.id} id={message.id} status={message.status} text={message.text} onFinishedDisplaying={setResponseToDisplayed}/>
+              <MarkdownDisplay
+                key={message.id}
+                id={message.id}
+                status={message.status}
+                text={message.text}
+              />
             </div>
           </div>
         ))}
@@ -39,22 +49,18 @@ export default function ChatLayout() {
   );
 }
 
-
-
-
-
 const MessageInput = () => {
+  const [input, setInput] = useState<string>("");
 
-    const [input,setInput] = useState<string>("")
-
-    const {generateResponse} = useChatContext()
+  const { generateResponse } = useChatContext();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleResize = () => {// used to make text input get taller to keep text in view
+  const handleResize = () => {
+    // used to make text input get taller to keep text in view
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight+5}px`;
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 5}px`;
     }
   };
 
@@ -63,7 +69,7 @@ const MessageInput = () => {
       e.preventDefault();
       if (input) {
         generateResponse(input);
-        setInput("")
+        setInput("");
       }
     }
   };
@@ -79,10 +85,10 @@ const MessageInput = () => {
         className="w-[100%] bg-white absolute bottom-6 p-2 rounded shadow-xl resize-none"
         placeholder="Say something..."
         value={input}
-        onChange={(e)=>setInput(e.target.value)}
+        onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         rows={1}
-        style={{ height: 'auto' }}
+        style={{ height: "auto" }}
       />
     </form>
   );

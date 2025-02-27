@@ -15,9 +15,8 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useChatContext } from "@/app/src/ChatContext";
 
-
-import {X} from "lucide-react"
-import { useSideBarContext } from "../layouts/SideBar";
+import { X } from "lucide-react";
+import { useSideBarContext } from "@/app/src/SideBarContext";
 
 const maxTitleLength: number = 25;
 export default function PaperCard({
@@ -56,7 +55,6 @@ export default function PaperCard({
   );
 }
 
-
 function FullPaperCard({
   arxivID,
   title,
@@ -73,16 +71,12 @@ function FullPaperCard({
   summary?: string;
   onClose: () => void;
 }) {
-
-  const {generateSummary, generateQuestionResponse} = useChatContext();
-  const {openChat} = useSideBarContext();
+  const { generateSummary, generateQuestionResponse } = useChatContext();
+  const { openChat } = useSideBarContext();
   // const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
 
   const handleSummaryGeneration = function () {
-    generateSummary(
-      title,
-      link
-    );
+    generateSummary(title, link);
     openChat();
   };
 
@@ -106,7 +100,10 @@ function FullPaperCard({
             >
               View Paper
             </Button>
-            <Button onClick={handleSummaryGeneration}> Generate Summary </Button>
+            <Button onClick={handleSummaryGeneration}>
+              {" "}
+              Generate Summary{" "}
+            </Button>
           </div>
           <div className="flex justify-between w-full">
             <Button>Call BFS</Button>
@@ -170,7 +167,7 @@ function PromptQuestionButton({
 }) {
   const [question, setQuestion] = useState<string>("");
 
-  const {openChat} = useSideBarContext()
+  const { openChat } = useSideBarContext();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {

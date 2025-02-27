@@ -1,11 +1,14 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from "next";
 import Features from "@repo/controller/src/features";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse)  {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
-  console.log("Called in generateQuestionResponse")
+  console.log("Called in generateQuestionResponse");
   try {
     const { question, pdfLink } = req.body;
     if (!pdfLink) {
@@ -14,10 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Mussing question" });
     }
 
-    const result = await Features.generateQuestionResponse(
-      pdfLink,
-      question,
-    );
+    const result = await Features.generateQuestionResponse(pdfLink, question);
     res.status(200).json({ result });
   } catch (error) {
     console.error("Error generating question response:", error);

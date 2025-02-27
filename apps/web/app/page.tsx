@@ -3,7 +3,8 @@ import { useState } from "react";
 import ForceGraph from "./src/ForceGraph";
 import { Sidebar } from "../components/layouts/SideBar";
 import SidebarButton from "@/components/ui/SideBarButton";
-import { ChantHistoryProvider } from "./src/ChatContext";
+import { ChatHistoryProvider } from "./src/ChatContext";
+import { SidebarProvider } from "./src/SideBarContext";
 
 // const SampleSelected: chosenPapers[] = [
 //   {title:"Attention is all you need", year:2002, authors:"Some old men", link:"https://arxiv.org/pdf/1706.03762", arxiv:"12345.213"},
@@ -28,6 +29,7 @@ export default function Home() {
   return (
     <div className="bg-black h-full">
       {/* <span className='text-4xl text-red-500'> This is some text</span> */}
+      <SidebarProvider>
       <ForceGraph
         chosenPapers={chosenPapers}
         setChosenPapers={setChosenPapers}
@@ -35,7 +37,7 @@ export default function Home() {
         setSelectedPaper={setSelectedPaper}
         openSideBar={() => setSideBarOpen(true)}
       />
-      <ChantHistoryProvider>
+      <ChatHistoryProvider>
         {sideBarOpen ? (
           <Sidebar
             selectedPaper={selectedPaper}
@@ -47,7 +49,8 @@ export default function Home() {
         ) : (
           <SidebarButton onClick={() => setSideBarOpen(true)} />
         )}
-      </ChantHistoryProvider>
+      </ChatHistoryProvider>
+      </SidebarProvider>
     </div>
   );
 }
