@@ -14,7 +14,6 @@ import { Paper } from "@repo/db/convert";
 
 
 
+console.log("Searching")
 
-
-
-// FetchPipeline.extractPaperWithDepth("1706.03762",3)
+NeoAccessor.getPaperBytitle("Attention")

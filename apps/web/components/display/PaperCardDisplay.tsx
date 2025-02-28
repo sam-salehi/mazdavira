@@ -20,11 +20,9 @@ import { useSideBarContext } from "@/app/src/SideBarContext";
 
 const maxTitleLength: number = 25;
 export default function PaperCard({
-  id,
   title,
   year,
   authors,
-  summary,
   link,
   selected,
   onClick,
@@ -35,19 +33,16 @@ export default function PaperCard({
   year: number;
   authors: string[];
   link: string;
-  summary?: string;
   selected: boolean;
   onClick: () => void;
   onClose: () => void;
 }) {
   return selected ? (
     <FullPaperCard
-      arxivID={id}
       title={title}
       year={year}
       authors={authors}
       link={link}
-      summary={summary}
       onClose={onClose}
     />
   ) : (
@@ -56,19 +51,16 @@ export default function PaperCard({
 }
 
 function FullPaperCard({
-  arxivID,
   title,
   year,
   authors,
   link,
   onClose,
 }: {
-  arxivID: string;
   title: string;
   year: number;
   authors: string[];
   link: string;
-  summary?: string;
   onClose: () => void;
 }) {
   const { generateSummary, generateQuestionResponse } = useChatContext();
@@ -112,53 +104,13 @@ function FullPaperCard({
                 generateQuestionResponse(link, question)
               }
             />
-            {/* <Button>
-        Prompt Question
-    </Button> */}
           </div>
         </CardFooter>
       </Card>
-      {/* {summaryStatus === "view" && (
-        <SummaryDisplay
-          summary={summary}
-          onCloseSummary={() => setSummaryStatus("available")}
-        />
-      )} */}
+
     </>
   );
 }
-
-// function SummarizePaperButton({
-//   summaryStatus,
-//   onSummaryGeneration,
-//   onOpenSummary,
-// }: {
-//   summaryStatus: SummaryStatus;
-//   onSummaryGeneration: () => void;
-//   onOpenSummary: () => void;
-// }) {
-//   if (summaryStatus === "available" || summaryStatus === "view")
-//     return <Button onClick={onOpenSummary}>View Summary</Button>;
-//   if (summaryStatus === "generating")
-//     return (
-//       <Button disabled variant="ghost">
-//         <Loader2 className="animate-spin" />
-//         Generating
-//       </Button>
-//     );
-//   if (summaryStatus === "error")
-//     return (
-//       <Popover>
-//         <PopoverTrigger asChild>
-//           <Button variant="destructive">Error Generating</Button>
-//         </PopoverTrigger>
-//         <PopoverContent className="w-80">
-//           <p>Encountered error prompting model</p>
-//         </PopoverContent>
-//       </Popover>
-//     );
-//   return <Button onClick={onSummaryGeneration}>Generate Summary</Button>;
-// }
 
 function PromptQuestionButton({
   questionEntered,
@@ -194,15 +146,27 @@ function PromptQuestionButton({
   );
 }
 
-function PartialPaperCard({
+export function PartialPaperCard({
   title,
+  authors,
+  year,
   onClose,
   onClick,
+  handleAddBtn,
+  isAdded
 }: {
   title: string;
-  onClose: () => void;
-  onClick: () => void;
+  authors?: string[],
+  year?: number,
+  onClose?: () => void;
+  onClick?: () => void;
+  handleAddBtn?: () => void,
+  isAdded?:boolean
 }) {
+
+  console.log(authors)
+  console.log(year)
+
   return (
     <Card className="w-full max-w-2xl cursor-pointer" onClick={onClick}>
       <CardHeader className="flex-row justify-between">
@@ -211,8 +175,21 @@ function PartialPaperCard({
             ? title.substring(0, maxTitleLength) + "..."
             : title}
         </CardTitle>
-        <X className="cursor-pointer" onClick={onClose} />
+        {onClose && <X className="cursor-pointer" onClick={onClose} />}
       </CardHeader>
+      {(authors && year) && 
+      <CardContent>
+          <p>{authors.reduce((acc, val) => acc + val + ", ")}</p>
+          <p className="text-sm text-gray-700">{year}</p>
+      </CardContent>
+      }
+      {handleAddBtn ? !isAdded?
+                  <Button onClick={handleAddBtn} >{" "}Add{" "}</Button>:
+                  <Button onClick={handleAddBtn} disabled variant={"secondary"} className="bg-green-500" >{" "}Add{" "}</Button>:
+                  <></>
+      }
     </Card>
   );
 }
+
+

@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
+import { chosenPaper } from "../page";
+import NeoAccessor from "@repo/db/neo";
 
 
-type SearchResult = {
-    // what gets fetched form backend as result of serach
-}
+
+type SearchResult = chosenPaper
 
 
 interface SearchContextType {
@@ -24,20 +25,28 @@ export const SearchContextProvider: React.FC<{children:ReactNode}> = ({children}
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
 
+
     // searches db for searchInput as title
     // adds found results into searchResults.
-    function submitSearch() {
-        
+    async function submitSearch() {
+        if (!searchInput) return
+        const nodes = await NeoAccessor.getPaperByTitle(searchInput) 
+        const results: SearchResult[] = nodes.map(node => ({
+            title: node.title,
+            year: node.pub_year,
+            authors: node.authors,
+            arxiv: node.arxiv,
+            link: node.pdf_link || ""
+        }));
+        setSearchResults(results)
     }
-
-
 
     const value = {
         searchInput,
         setSearchInput,
         searchResults,
         setSearchResults,
-        submitSearch
+        submitSearch,
     }
 
     return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>;

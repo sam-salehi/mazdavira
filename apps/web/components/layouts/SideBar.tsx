@@ -52,7 +52,12 @@ export function Sidebar({
             setChosenPapers={setChosenPapers}
           ></Navbar>
         ) : 
-        sidebarTab=== "chat" ? <ChatLayout></ChatLayout> : <SearchSideBar></SearchSideBar>
+        sidebarTab=== "chat" ? 
+        <ChatLayout></ChatLayout> : 
+        <SearchSideBar
+          chosenPapers={chosenPapers}
+          setChosenPapers={setChosenPapers}
+          ></SearchSideBar>
         }
       </SearchContextProvider>
     </div>

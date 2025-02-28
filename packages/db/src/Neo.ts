@@ -1,11 +1,11 @@
-import { QueryConfig, ResultSummary } from "neo4j-driver";
+import { QueryConfig, ResultSummary, session } from "neo4j-driver";
 import driver from "../../db/src/config.js";
 import { type Paper } from "./convert.js";
 
 // const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
 
 
-export type Node = {
+export type Node = { // used for presenting nodes and edges on Graph visualization.
     id: string; // arxiv id
     title: string;
     refCount: number;
@@ -32,7 +32,7 @@ export default class NeoAccessor {
     }
 
 
-    public static async getAllNodes(): Promise<Node[]> {//FIXME:  change to private after testing
+    private static async getAllNodes(): Promise<Node[]> {
         //returns array of all nodes 
 
         const QUERY = `
@@ -55,7 +55,7 @@ export default class NeoAccessor {
     }
 
 
-    public static async getAllEdges(): Promise<Edge[]> {
+    private static async getAllEdges(): Promise<Edge[]> {
 
         const QUERY = `
             MATCH (p:Paper)-[r]->(n:Paper)
@@ -78,9 +78,24 @@ export default class NeoAccessor {
 
 
 
-
-
-
+    public static async getPaperByTitle(title:string): Promise<Paper[]> {
+        // FIXME: change to getPaperS
+        // fetches papers containing given string inside title.
+        const QUERY = `MATCH (p:Paper) WHERE p.title CONTAINS $title return p`
+        const session = driver.session()
+        let nodePapers;
+        try {
+            const result = await session.run(QUERY,{title})
+            const nodes:Paper[] = result.records.map(record => record._fields[0].properties)
+            return nodes
+        } catch (error) {
+            console.error("Could not fetch paper by title", error)
+            throw error
+        } finally {
+            session.close()
+        }
+        return []
+    }
 
     public static async getPaper(arxiv: string): Promise<Paper | undefined>{
         // gets paper with given arxivdID. Returns null if none exists

@@ -5,7 +5,7 @@ export type Paper = {
     title: string,
     authors: string[],
     institutions: string[],
-    pub_year: number | null,
+    pub_year: number,
     arxiv: string,
     doi: string | null,
     referencing_count: number | null,
