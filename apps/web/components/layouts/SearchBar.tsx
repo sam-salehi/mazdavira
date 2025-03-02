@@ -28,7 +28,7 @@ export function SearchInput({ onClick }:{onClick:()=>void}) {
 
     return (
         <div className="flex items-center mb-8" onClick={onClick}>
-            <Search className="text-gray-500 mr-2" onClick={handleSubmission}/>
+            <Search className="text-gray-500 mr-2 cursor-pointer" onClick={handleSubmission}/>
             <Input
                 type="text"
                 placeholder="Enter Title"
