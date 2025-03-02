@@ -78,23 +78,24 @@ export default class NeoAccessor {
 
 
 
-    public static async getPaperByTitle(title:string): Promise<Paper[]> {
-        // FIXME: change to getPaperS
-        // fetches papers containing given string inside title.
-        const QUERY = `MATCH (p:Paper) WHERE p.title CONTAINS $title return p`
-        const session = driver.session()
+    public static async getPapersByTitle(title: string): Promise<Paper[]> {
+        // fetches papers containing given string inside title, case insensitive.
+        const QUERY = `MATCH (p:Paper) 
+                       WHERE toLower(p.title) CONTAINS toLower($title) 
+                       RETURN p`;
+        const session = driver.session();
         let nodePapers;
         try {
-            const result = await session.run(QUERY,{title})
-            const nodes:Paper[] = result.records.map(record => record._fields[0].properties)
-            return nodes
+            const result = await session.run(QUERY, { title });
+            const nodes: Paper[] = result.records.map(record => record._fields[0].properties);
+            return nodes;
         } catch (error) {
-            console.error("Could not fetch paper by title", error)
-            throw error
+            console.error("Could not fetch paper by title", error);
+            throw error;
         } finally {
-            session.close()
+            session.close();
         }
-        return []
+        return [];
     }
 
     public static async getPaper(arxiv: string): Promise<Paper | undefined>{

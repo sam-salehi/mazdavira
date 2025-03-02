@@ -1,6 +1,5 @@
 import { chosenPaper } from "@/app/page";
 import PaperCard from "../display/PaperCardDisplay";
-
 function Navbar({
   chosenPapers,
   selectedPaper,
@@ -36,5 +35,4 @@ function Navbar({
     </div>
   );
 }
-
 export default Navbar;

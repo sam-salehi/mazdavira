@@ -30,7 +30,7 @@ export const SearchContextProvider: React.FC<{children:ReactNode}> = ({children}
     // adds found results into searchResults.
     async function submitSearch() {
         if (!searchInput) return
-        const nodes = await NeoAccessor.getPaperByTitle(searchInput) 
+        const nodes = await NeoAccessor.getPapersByTitle(searchInput) 
         const results: SearchResult[] = nodes.map(node => ({
             title: node.title,
             year: node.pub_year,

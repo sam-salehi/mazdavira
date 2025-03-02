@@ -4,21 +4,31 @@ import { useSearchContext } from "@/app/src/SearchContext";
 import { chosenPaper } from "@/app/page";
 import {PartialPaperCard} from "../display/PaperCardDisplay";
 import NeoAccessor from "@repo/db/neo";
+import { useSideBarContext } from "@/app/src/SideBarContext";
 
 
 export function SearchInput({ onClick }:{onClick:()=>void}) {
 
     const {searchInput,setSearchInput,submitSearch} = useSearchContext();
+    const {openNavigation,openSearch} = useSideBarContext()
 
 
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => setSearchInput(event.target.value);
+
+    const handleSubmission = () => {
+        if (!searchInput) {
+            openNavigation() // open navigaton on empty search submit
+            return
+        }
+        submitSearch()
+    }
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {openSearch();setSearchInput(event.target.value);}
     const handleKeyDown = (event: React.KeyboardEvent) => {
-        if (event.key === "Enter") submitSearch()
+        if (event.key === "Enter") handleSubmission()
     }
 
     return (
         <div className="flex items-center mb-8" onClick={onClick}>
-            <Search className="text-gray-500 mr-2" />
+            <Search className="text-gray-500 mr-2" onClick={handleSubmission}/>
             <Input
                 type="text"
                 placeholder="Enter Title"
