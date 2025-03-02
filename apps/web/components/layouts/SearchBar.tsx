@@ -6,7 +6,7 @@ import {PartialPaperCard} from "../display/PaperCardDisplay";
 import NeoAccessor from "@repo/db/neo";
 
 
-export function SearchInput({ onClick }) {
+export function SearchInput({ onClick }:{onClick:()=>void}) {
 
     const {searchInput,setSearchInput,submitSearch} = useSearchContext();
 
@@ -17,7 +17,7 @@ export function SearchInput({ onClick }) {
     }
 
     return (
-        <div className="flex items-center" onClick={onClick}>
+        <div className="flex items-center mb-8" onClick={onClick}>
             <Search className="text-gray-500 mr-2" />
             <Input
                 type="text"
@@ -46,7 +46,7 @@ function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[
         }])
     }
 
-    return <div className="grid grid-cols-1 gap-4">
+    return <div className=" h-[90%] overflow-y-scroll hide-scrollbar">
         {searchResults.map((paper)=>(
             <PartialPaperCard
                 key={paper.arxiv}
@@ -54,7 +54,7 @@ function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[
                 authors={paper.authors}
                 year={paper.year}
                 handleAddBtn={()=>addChosenPaper(paper.arxiv)}
-                isAdded = {!!chosenPapers.find(cp => cp.arxiv=paper.arxiv)}
+                isAdded = {!!chosenPapers.find(cp => cp.arxiv===paper.arxiv)}
             />
         ))}
     </div>

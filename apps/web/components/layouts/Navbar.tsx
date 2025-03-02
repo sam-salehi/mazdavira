@@ -13,7 +13,7 @@ function Navbar({
   setChosenPapers: (papers: chosenPaper[]) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4">
+    <div className="h-[90%] overflow-y-scroll hide-scrollbar">
       {chosenPapers.map((paper) => (
         <PaperCard
           key={paper.arxiv}

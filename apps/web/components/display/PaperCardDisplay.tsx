@@ -74,7 +74,7 @@ function FullPaperCard({
 
   return (
     <>
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-2xl h-fit mb-5">
         <CardHeader className="flex-row justify-between">
           <CardTitle className="text-xl font-bold">{title}</CardTitle>
           <X className="cursor-pointer" onClick={onClose} />
@@ -168,7 +168,7 @@ export function PartialPaperCard({
   console.log(year)
 
   return (
-    <Card className="w-full max-w-2xl cursor-pointer" onClick={onClick}>
+    <Card className="w-full max-w-2xl cursor-pointer h-fit mb-5" onClick={onClick}>
       <CardHeader className="flex-row justify-between">
         <CardTitle className="text-xl font-bold">
           {title.length > maxTitleLength
@@ -178,14 +178,14 @@ export function PartialPaperCard({
         {onClose && <X className="cursor-pointer" onClick={onClose} />}
       </CardHeader>
       {(authors && year) && 
-      <CardContent>
+      <CardContent className="pb-0">
           <p>{authors.reduce((acc, val) => acc + val + ", ")}</p>
           <p className="text-sm text-gray-700">{year}</p>
       </CardContent>
       }
       {handleAddBtn ? !isAdded?
-                  <Button onClick={handleAddBtn} >{" "}Add{" "}</Button>:
-                  <Button onClick={handleAddBtn} disabled variant={"secondary"} className="bg-green-500" >{" "}Add{" "}</Button>:
+                  <Button className="ml-[80%] mb-2" onClick={handleAddBtn} >{" "}Add{" "}</Button>:
+                  <Button className="ml-[80%] mb-2" onClick={handleAddBtn} disabled>{" "}Add{" "}</Button>:
                   <></>
       }
     </Card>

@@ -13,7 +13,3 @@ import NeoAccessor from "@repo/db/neo";
 import { Paper } from "@repo/db/convert";
 
 
-
-console.log("Searching")
-
-NeoAccessor.getPaperBytitle("Attention")
