@@ -50,6 +50,7 @@
     "react-spinners": "^0.15.0",
     "supabase": "^2.6.8",
     "three": "^0.173.0",
+    "websocket": "^1.0.35",
     "xml2js": "^0.6.2",
     "zod": "^3.24.1"
   }

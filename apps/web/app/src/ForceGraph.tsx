@@ -1,8 +1,9 @@
 import ForceGraph3D from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
-import NeoAccessor, { Edge, Node } from "@repo/db/neo";
+import NeoAccessor from "@repo/db/neo";
 import { chosenPaper } from "../page";
 import { Paper } from "@repo/db/convert";
+import { useGraphDataContext } from "./GraphDataContext";
 
 export default function ForceGraph({
   chosenPapers,
@@ -17,28 +18,13 @@ export default function ForceGraph({
   selectedPaper: string;
   setSelectedPaper: (s: string) => void;
 }) {
-  const [graphData, setGraphData] = useState<{
-    nodes: Node[];
-    links: Edge[];
-  }>();
 
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-
+  const {graphData} =  useGraphDataContext();
   // setup api calls that calls back 
-  
-  const graphRef = useRef<typeof ForceGraph3D | null>(null);
-
-
-
-  useEffect(() => { // laods entire graph from backend for inital fetch
-    const fetchGraph = async () => {
-      const data = await NeoAccessor.getEntireGraph();
-      setGraphData(data);
-    };
-    fetchGraph();
-  }, []);
+  const graphRef = useRef(null);
 
   useEffect(() => { 
     // pulls neighbours of selectedPaper from backend's id from backend
@@ -47,14 +33,12 @@ export default function ForceGraph({
 
       const neighbors: Paper[] = await NeoAccessor.getReferences(arxiv)
       const neighborIDs: string[] = neighbors.map(n => n.arxiv)
-      console.log("IDS")
-      console.log(neighborIDs)
       setSelectedPapersNeighbors(new Set(neighborIDs))
     }
 
     getNeighbours(selectedPaper)
 
-  },[selectedPaper])
+  },[selectedPaper,graphData])
 
   console.log("Logging neighbors: ")
   console.log(selectedPapersNeighbors)
@@ -101,7 +85,7 @@ export default function ForceGraph({
     }
   };
 
-  const handleEdgeClick = async function ({ source, target }) {
+  const handleEdgeClick = async function ({ source, target }) { //FIXME: probably can just remove this
     if (
       chosenPapers.find(
         (paper) => paper.arxiv === source.id || paper.arxiv === target.id,

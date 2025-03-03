@@ -5,6 +5,7 @@ import { Sidebar } from "../components/layouts/SideBar";
 import SidebarButton from "@/components/ui/SideBarButton";
 import { ChatHistoryProvider } from "./src/ChatContext";
 import { SidebarProvider } from "./src/SideBarContext";
+import { GraphDataProvider } from "./src/GraphDataContext";
 
 export type chosenPaper = {
   title: string;
@@ -20,13 +21,10 @@ export default function Home() {
   const [selectedPaper, setSelectedPaper] = useState<string>(""); // arxivID of selected paper on sidebar
 
 
-
-
-  
-
   return (
     <div className="bg-black h-full">
       {/* <span className='text-4xl text-red-500'> This is some text</span> */}
+      <GraphDataProvider>
       <SidebarProvider>
       <ForceGraph
         chosenPapers={chosenPapers}
@@ -49,6 +47,7 @@ export default function Home() {
         )}
       </ChatHistoryProvider>
       </SidebarProvider>
+      </GraphDataProvider>
     </div>
   );
 }
