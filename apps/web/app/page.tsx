@@ -20,6 +20,10 @@ export default function Home() {
   const [selectedPaper, setSelectedPaper] = useState<string>(""); // arxivID of selected paper on sidebar
 
 
+
+
+  
+
   return (
     <div className="bg-black h-full">
       {/* <span className='text-4xl text-red-500'> This is some text</span> */}

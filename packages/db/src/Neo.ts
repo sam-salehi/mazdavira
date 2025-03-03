@@ -140,21 +140,21 @@ export default class NeoAccessor {
         }
     }
 
-    public static async getReferences(title: string) : Promise<Paper[]> { //TODO: getReferences based on arxivID instead
-        // returns all neighbours to referenced by given title. 
+    public static async getReferences(arxiv: string) : Promise<Paper[]> {
+        // returns all neighbours referenced by given title. 
         // Returns empty list if paper not found
         const session = driver.session()
         const QUERY = `
             MATCH (paper:Paper)-[r:REFERENCED]->(n)
-            WHERE paper.title = $title
+            WHERE paper.arxiv = $arxiv
             RETURN n
         `
         let referencedPapers: Paper[] = []
         try {
-            const result = await session.run(QUERY,{title:title})
+            const result = await session.run(QUERY,{arxiv:arxiv})
             result.records.forEach((res) => referencedPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
         } catch (error) {
-            console.error(`Issue fetching neighbours of paper ${title}: `,error)
+            console.error(`Issue fetching neighbours of paper ${arxiv}: `,error)
             throw error
         } finally {
             session.close()
@@ -162,28 +162,28 @@ export default class NeoAccessor {
         }
     }
 
-    public static async getReferencing(title: string) : Promise<Paper[]> { //TODO: getReferencing based on Arxiv ID instead
-        // Returns all nodes that are referencing the node with given title.
-        // returns empty list if paper not found
-        const session = driver.session()
-        const QUERY = `
-            MATCH (n)-[r:REFERENCED]->(paper:Paper)
-            WHERE paper.title = $title
-            RETURN n
-        `
-        let referencingPapers: Paper[] = []
-        try {
-            const result = await session.run(QUERY,{title:title})
-            result.records.forEach((res) => referencingPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
-        } catch (error) {
-            console.error(`Issue fetching neighbours of paper ${title}: `,error)
-            throw error
-        } finally {
-            session.close()
-            return referencingPapers
-        }
+    // public static async getReferencing(title: string) : Promise<Paper[]> { // REMOVE:
+    //     // Returns all nodes that are referencing the node with given title.
+    //     // returns empty list if paper not found
+    //     const session = driver.session()
+    //     const QUERY = `
+    //         MATCH (n)-[r:REFERENCED]->(paper:Paper)
+    //         WHERE paper.title = $title
+    //         RETURN n
+    //     `
+    //     let referencingPapers: Paper[] = []
+    //     try {
+    //         const result = await session.run(QUERY,{title:title})
+    //         result.records.forEach((res) => referencingPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
+    //     } catch (error) {
+    //         console.error(`Issue fetching neighbours of paper ${title}: `,error)
+    //         throw error
+    //     } finally {
+    //         session.close()
+    //         return referencingPapers
+    //     }
 
-    }
+    // }
 
     public static async getReferencesWithDepth(title: string) {
         // probably not required. 

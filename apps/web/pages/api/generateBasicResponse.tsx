@@ -17,8 +17,6 @@ export default async function handler(
 
     const result = await Features.generateBasicResponse(history);
 
-    console.log("Generated response");
-    console.log(result);
     res.status(200).json({ result });
   } catch (error) {
     console.error("Error generating basic response:", error);

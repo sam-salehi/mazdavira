@@ -6,9 +6,6 @@ import { useChatContext } from "@/app/src/ChatContext";
 import { Textarea } from "../ui/textarea";
 import MarkdownDisplay from "../display/MarkdownDisplay";
 
-// TODO: theres a problem with the async react calls when generate response gets called too many times.
-// TODO: make it possible to stop fetching something after request.
-
 export default function ChatLayout() {
   const { chatHistory } = useChatContext();
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +21,7 @@ export default function ChatLayout() {
   return (
     <div className="relative flex flex-col w-full h-[95%] mx-auto stretch rounded-lg">
       <div
-        className="space-y-4 rounded-lg mb-2 h-[88%] px-2 pt-4 bg-white overflow-scroll hide-scrollbar"
+        className="space-y-4 rounded-lg mb-2 h-[88%] px-2 pt-4 bg-white overflow-y-scroll overflow-x-hidden hide-scrollbar"
         style={{ paddingBottom: "75%" }}
         ref={chatContainerRef}
       >

@@ -2,6 +2,7 @@ import ForceGraph3D from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
 import NeoAccessor, { Edge, Node } from "@repo/db/neo";
 import { chosenPaper } from "../page";
+import { Paper } from "@repo/db/convert";
 
 export default function ForceGraph({
   chosenPapers,
@@ -20,17 +21,44 @@ export default function ForceGraph({
     nodes: Node[];
     links: Edge[];
   }>();
-  const [hoverNodeID, setHoverNodeID] = useState<string>("");
 
+  const [hoverNodeID, setHoverNodeID] = useState<string>("");
+  const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
+  
+
+  // setup api calls that calls back 
+  
   const graphRef = useRef<typeof ForceGraph3D | null>(null);
 
-  useEffect(() => {
+
+
+  useEffect(() => { // laods entire graph from backend for inital fetch
     const fetchGraph = async () => {
       const data = await NeoAccessor.getEntireGraph();
       setGraphData(data);
     };
     fetchGraph();
   }, []);
+
+  useEffect(() => { 
+    // pulls neighbours of selectedPaper from backend's id from backend
+    // they are in turn used to color edges
+    const getNeighbours = async function(arxiv:string) {
+
+      const neighbors: Paper[] = await NeoAccessor.getReferences(arxiv)
+      const neighborIDs: string[] = neighbors.map(n => n.arxiv)
+      console.log("IDS")
+      console.log(neighborIDs)
+      setSelectedPapersNeighbors(new Set(neighborIDs))
+    }
+
+    getNeighbours(selectedPaper)
+
+  },[selectedPaper])
+
+  console.log("Logging neighbors: ")
+  console.log(selectedPapersNeighbors)
+
 
   const zoomOntoNode = function (node: any) {
     const distance = 40;
@@ -64,7 +92,7 @@ export default function ForceGraph({
           title: paper.title,
           year: paper.pub_year,
           authors: paper.authors,
-          link: paper.pdf_link,
+          link: paper.pdf_link || "",
           arxiv: paper.arxiv,
         },
         ...chosenPapers,
@@ -107,9 +135,12 @@ export default function ForceGraph({
   };
 
   const setNodeColor = function (node): string {
+    // add one for those being the neighbor of the selected Paper.
+    if (selectedPapersNeighbors.has(node.id)) return "rgb(255,204,0,1)"
+    
     switch (node.id) {
       case hoverNodeID:
-        return "rgb(255,0,0,1)";
+        return "rgb(0,0,139,1)";
       case selectedPaper:
         return "rgb(220,0,0,1)";
       default:
