@@ -24,7 +24,16 @@ export default class NeoAccessor {
 
     public static async getEntireGraph() {
 
-        const [nodes, edges] = await Promise.all([this.getAllNodes(),this.getAllEdges()])
+        const [nodes, edges] = await Promise.all([this.getNodes(),this.getEdges()])
+        return {
+            nodes: nodes,
+            links: edges
+        }
+    }
+
+    public static async getNewGraph(creation_time:string) {
+        // fetches nodes and edges created after creation_time
+        const [nodes, edges] = await Promise.all([this.getNodes(creation_time),this.getEdges(creation_time)])
         return {
             nodes: nodes,
             links: edges
@@ -32,19 +41,26 @@ export default class NeoAccessor {
     }
 
 
-    private static async getAllNodes(): Promise<Node[]> {
+    private static async getNodes(creation_time?:string): Promise<Node[]> {
         //returns array of all nodes 
 
         const QUERY = `
             MATCH (p:Paper)
+            ${creation_time && `WHERE p.created_at > $creation_time`}
             RETURN p.title as title, p.arxiv as arxiv, p.referenced_count as refCount
-        `
+            `
+
+ 
+
         let nodes: Node[] = [];
-
-
         const session = driver.session()
         try {
-            const result = await session.run(QUERY)
+            let result;
+            if (creation_time) {
+                result = await session.run(QUERY,{creation_time:creation_time})
+            } else {
+                result = await session.run(QUERY)
+            }
             result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount:rec._fields[2]}))
         } catch (error) {
             console.error("There was an issue fetching all nodes", error)
@@ -55,18 +71,27 @@ export default class NeoAccessor {
     }
 
 
-    private static async getAllEdges(): Promise<Edge[]> {
+    private static async getEdges(creation_time?:string): Promise<Edge[]> {
 
+
+        
         const QUERY = `
-            MATCH (p:Paper)-[r]->(n:Paper)
-            return p.arxiv,n.arxiv
-        `
+                MATCH (p:Paper)-[r]->(n:Paper)
+                ${creation_time && `WHERE p.created_at > $creation_time`}
+                RETURN p.arxiv,n.arxiv
+            `
+
 
         let edges: Edge[] = [];
 
         const session = driver.session()
         try {
-            const result = await session.run(QUERY)
+            let result;
+            if (creation_time) {
+                result = await session.run(QUERY,{creation_time:creation_time})
+            } else {
+                result = await session.run(QUERY)
+            }
             result.records.forEach(rec => edges.push({source: rec._fields[0], target:rec._fields[1]}))
         } catch (error) {
             console.error("There was in issue fetching all edges", error)
@@ -74,6 +99,7 @@ export default class NeoAccessor {
         }
         return edges
     }
+
 
 
 
