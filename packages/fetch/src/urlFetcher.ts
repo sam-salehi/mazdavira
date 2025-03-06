@@ -18,6 +18,7 @@ export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
 // const semaphore: Semaphore = new Semaphore(1)
 
 export async function  getReferencedCount(arxiv:string): Promise<number | null> {
+  return 0 // TODO:
   const referenceCount: number = await ArxivAPI.getReferencedCount(arxiv)
   return referenceCount
 }
@@ -53,7 +54,7 @@ class ArxivAPI {
 
 
   
-  public static async fecthArxivID(title: string): Promise<string | null> { // FIXME: figure out a way to make sure teh retrieved id is accurate within some range. 
+  public static async fecthArxivID(title: string): Promise<string | null> { 
       // URL encode the title for the query
       const query = `http://export.arxiv.org/api/query?search_query=ti:"${encodeURIComponent(title)}"&max_results=1`;
 
@@ -113,7 +114,7 @@ class ArxivAPI {
     // Add delay to avoid aggressive scraping
     try {
       const proxyResponse = await axios.get(scholarUrl, {
-          proxy: { //TODO: figure out how to make proxy work 
+          proxy: { 
               protocol: "http",
               host: "superproxy.zenrows.com",
               port: parseInt("1337" || ''),

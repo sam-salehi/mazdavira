@@ -11,20 +11,23 @@ const LLMSemaphore = new Semaphore(3) // seems reasonable for llm response.
 
 export default class FetchPipeline {
 
-    public static async extractPaperWithDepth(arxivID:string | null, depth: number) {
+    public static async extractPaperWithDepth(arxivID:string | null, depth: number, callback?: (id:string)=>void) {
         // recursive tree, bfs on a paper and its references
         // REQUIRES: depth >= 0,  
         // arxivID is the id for the root )
+        // callback is to be called after a paper or reference is added to DB.
+        // This is used to tell server to send a message to front end saying it can display new nodes.
         if (!arxivID || depth === 0) return
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
-        const extractedPapers: Paper[] = await this.extractPaper(arxivID)
+        const extractedPapers: Paper[] = await this.extractPaper(arxivID,callback)
         console.log("Extracted local paper")
-        extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1)) // async
+        extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
     }
 
 
-    public static async extractPaper(arxivID: string): Promise<Paper[]> {
+    public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<Paper[]> {
         // get llm to extract information about paper
+        // callback defined in extractPaperWithDepth
         if (!arxivID) return [];
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
@@ -48,7 +51,7 @@ export default class FetchPipeline {
         LLMSemaphore.release();
 
         // TableAccessor.pushPapers(papers)
-        if (srcPaper) NeoAccessor.pushExtraction(srcPaper,referencedPapers) //async 
+        if (srcPaper) NeoAccessor.pushExtraction(srcPaper,referencedPapers,callback) //async 
         return referencedPapers
     }
 

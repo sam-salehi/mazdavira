@@ -13,3 +13,9 @@ import NeoAccessor from "@repo/db/neo";
 import { Paper } from "@repo/db/convert";
 
 
+// test extraction with time.
+
+
+
+// const callback = (id:string) => console.log(id)
+// FetchPipeline.extractPaperWithDepth("2309.08600",2,callback)

@@ -11,7 +11,7 @@ export const SUMMARY_GENERATION_PROMPT = `You will be given a research paper's e
 
 
 
-export const EXTRACTING_REFERENCES_PROMPT = `You will be given a research paper and be asked to extract the information setout below:
+export const EXTRACTING_REFERENCES_PROMPT = `You will be given a research paper and be asked to extract the information setout below. Please make sure the title and authors prompts are well formatted.
 title: the title of the paper
 authors: a list of authors of the paper
 pubYear: the year the paper was published
