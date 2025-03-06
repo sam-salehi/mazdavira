@@ -7,7 +7,8 @@ import NeoAccessor, { Edge, Node } from "@repo/db/neo";
 
 interface GraphDataType {
     graphData: {nodes: Node[], links: Edge[]}
-    setGraphData: () => void
+    setGraphData: () => void,
+    callBFS: (id:string) => void,
 }
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
@@ -15,19 +16,18 @@ const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
 export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  => {
 
 
-
-    // TODO: make web socket
+    // TODO: keep time for last fetch
+    // on BFS push times onto database
+    // if call to API BFS returns sucessfuly then fetch all new elements
   // TODO: make the backend fetching graphData pass in time of last fetch 
-  // thus it only gets new elements and appends to previous elements
-  // TODO: setup API call in context to be passed down to elementss
-  // whenever websocket response useEffect fetches from backend.
+  // thus it only gets new elements and appends to previous element
+  // after getting new elements handle async loading.
 
 
     const [graphData, setGraphData] = useState<{
         nodes: Node[];
         links: Edge[];
       }>();
-
 
       useEffect(() => { // laods entire graph from backend for inital fetch
         const fetchGraph = async () => {
@@ -38,12 +38,17 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
       }, []);
 
 
+ 
+      const callBFS = (id:string) => {
+
+      };
+
       const value = {
         graphData,
         setGraphData,
+        callBFS,
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
-
 }
 
 

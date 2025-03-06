@@ -290,7 +290,7 @@ export default class NeoAccessor {
 
     private static generatePaperQuery(paper: Paper): string {
         // Creates proper cypher query, ignoring nulls
-        const properties = this.getPropertyTable(paper)
+        const properties = this.getPropertyTable(paper,true)
 
         // Filter out properties with undefined values and construct the query
         const queryParts = properties
@@ -300,7 +300,7 @@ export default class NeoAccessor {
     }
 
     private static convertToPaper(node: any): Paper {
-        const properties = NeoAccessor.getPropertyTable(node)
+        const properties = NeoAccessor.getPropertyTable(node,false)
         const definedProps = properties.reduce((acc, { key, value }) => {
             if (value !== undefined) {
                 acc[key] = value;
@@ -310,7 +310,7 @@ export default class NeoAccessor {
         return definedProps as Paper
     }
 
-    private static getPropertyTable(node: any): Array<{ key: string; value: any }>{
+    private static getPropertyTable(node: any,createDateTime: boolean): Array<{ key: string; value: any }>{
         const properties: Array<{ key: string; value: any }> = [
             { key: "title", value: node.title },
             { key: "authors", value: node.authors },
@@ -320,8 +320,11 @@ export default class NeoAccessor {
             { key: "doi", value: node.doi },
             { key: "referencing_count", value: node.referencing_count },
             { key: "referenced_count", value: node.referenced_count },
-            { key: "pdf_link", value: node.pdf_link },
+            { key: "pdf_link", value: node.pdf_link }, 
         ];
+        // ISO 8601 Compatible datatime.
+        if (createDateTime) properties.push({key:"created_at", value: new Date().toISOString()}) 
+
         return properties
     }
 }

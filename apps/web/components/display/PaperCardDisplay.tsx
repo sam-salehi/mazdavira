@@ -17,9 +17,11 @@ import { useChatContext } from "@/app/src/ChatContext";
 
 import { X } from "lucide-react";
 import { useSideBarContext } from "@/app/src/SideBarContext";
+import { useGraphDataContext } from "@/app/src/GraphDataContext";
 
 const maxTitleLength: number = 25;
 export default function PaperCard({
+  id,
   title,
   year,
   authors,
@@ -39,6 +41,7 @@ export default function PaperCard({
 }) {
   return selected ? (
     <FullPaperCard
+    id = {id}
       title={title}
       year={year}
       authors={authors}
@@ -51,12 +54,14 @@ export default function PaperCard({
 }
 
 function FullPaperCard({
+  id,
   title,
   year,
   authors,
   link,
   onClose,
 }: {
+  id:string
   title: string;
   year: number;
   authors: string[];
@@ -66,6 +71,8 @@ function FullPaperCard({
   const { generateSummary, generateQuestionResponse } = useChatContext();
   const { openChat } = useSideBarContext();
   // const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
+  const {callBFS} = useGraphDataContext()
+
 
   const handleSummaryGeneration = function () {
     generateSummary(title, link);
@@ -98,7 +105,7 @@ function FullPaperCard({
             </Button>
           </div>
           <div className="flex justify-between w-full">
-            <Button>Call BFS</Button>
+            <Button onClick={() => callBFS(id)}>Call BFS</Button>
             <PromptQuestionButton
               questionEntered={(question: string) =>
                 generateQuestionResponse(link, question)
