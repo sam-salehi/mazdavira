@@ -46,11 +46,9 @@ export default class NeoAccessor {
 
         const QUERY = `
             MATCH (p:Paper)
-            ${creation_time && `WHERE p.created_at > $creation_time`}
+            ${creation_time ? `WHERE p.created_at > $creation_time` : ""}
             RETURN p.title as title, p.arxiv as arxiv, p.referenced_count as refCount
             `
-
- 
 
         let nodes: Node[] = [];
         const session = driver.session()
@@ -66,21 +64,17 @@ export default class NeoAccessor {
             console.error("There was an issue fetching all nodes", error)
             throw error
         }
-
         return nodes
     }
 
 
     private static async getEdges(creation_time?:string): Promise<Edge[]> {
-
-
-        
         const QUERY = `
                 MATCH (p:Paper)-[r]->(n:Paper)
-                ${creation_time && `WHERE p.created_at > $creation_time`}
+                ${creation_time ? `WHERE p.created_at > $creation_time` : ""}
                 RETURN p.arxiv,n.arxiv
             `
-
+            // ${creation_time && `WHERE p.created_at > $creation_time`}
 
         let edges: Edge[] = [];
 

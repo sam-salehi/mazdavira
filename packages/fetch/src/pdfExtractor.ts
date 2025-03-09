@@ -1,11 +1,12 @@
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
+import pdf from "pdf-parse"
 
 export class PaperExtractor {
 
     public static async extractMetaData(url:string): Promise<string> {
         const paper: string = await PaperExtractor.fetchPDF(url);
         let metadata:string = PaperExtractor.extractTitleSection(paper)
-        metadata += PaperExtractor.extractReferenceSection(paper)
+        metadata += PaperExtractor.extractArxivMentions(paper)
         return metadata
     }
 
@@ -42,13 +43,30 @@ export class PaperExtractor {
         return ""
     }
     
-    private static extractReferenceSection(pdfContent: string): string{
-        // TODO: figure out what to do if paper has multiple references keyword. Same thing should be handled in extract body TODO:
-        const regex = /references/i;
-        const k = pdfContent.search(regex);
-        if (k) return pdfContent.slice(k);
-        return ""
+
+
+    private static extractArxivMentions(pdfContent: string) : string {
+        // finds all lines that have arxiv mentioned and those entire lines
+        const lines = pdfContent.split("\n")
+        let arxivLines = ""
+        for (const line of lines) {
+            if (line.toLowerCase().includes("arxiv")){
+                arxivLines += line + '\n'
+            }
+        }
+        return arxivLines
     }
+
+
+
+    // private static extractReferenceSection(pdfContent: string): string{
+    //     const regex = /references/i;
+    //     const k = pdfContent.search(regex);
+    //     if (k) return pdfContent.slice(k);
+    //     return ""
+    // }
+
+
 }
 
 

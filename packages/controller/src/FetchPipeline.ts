@@ -32,6 +32,9 @@ export default class FetchPipeline {
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
         const pdf:string = await PaperExtractor.extractMetaData(link);
+        console.log("Extracted pdf")
+        console.log(pdf)
+
         await LLMSemaphore.acquire();
         let info: paperInfo | undefined = undefined;
 

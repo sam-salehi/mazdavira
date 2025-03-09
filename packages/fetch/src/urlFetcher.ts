@@ -18,7 +18,7 @@ export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
 // const semaphore: Semaphore = new Semaphore(1)
 
 export async function  getReferencedCount(arxiv:string): Promise<number | null> {
-  return 0 // TODO:
+  return 0 // FIXME:
   const referenceCount: number = await ArxivAPI.getReferencedCount(arxiv)
   return referenceCount
 }
@@ -48,7 +48,7 @@ class ArxivAPI {
           return link
       } catch (error) {
           console.error(`Error fetching paper URL from ArXiv for ${arxivId}:`, error);
-          throw error
+          return null
       }
   }
 

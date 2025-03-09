@@ -184,7 +184,7 @@ export function PartialPaperCard({
         </CardTitle>
         {onClose && <X className="cursor-pointer" onClick={onClose} />}
       </CardHeader>
-      {(authors && year) && 
+      {(authors?.length && year) && 
       <CardContent className="pb-0">
           <p>{authors.reduce((acc, val) => acc + val + ", ")}</p>
           <p className="text-sm text-gray-700">{year}</p>
