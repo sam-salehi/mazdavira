@@ -1,8 +1,23 @@
 import { QueryConfig, ResultSummary, session } from "neo4j-driver";
 import driver from "../../db/src/config.js";
-import { type Paper } from "./convert.js";
 
 // const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
+
+
+
+export type Paper = {
+    title: string,
+    authors: string[],
+    institutions: string[],
+    pub_year: number,
+    arxiv: string,
+    doi: string | null,
+    referencing_count: number | null,
+    referenced_count: number | null,
+    pdf_link: string | null
+
+}
+
 
 
 export type Node = { // used for presenting nodes and edges on Graph visualization.
@@ -15,9 +30,6 @@ export type Edge = {
     source: string,
     target: string
 }
-
-
-
 
 export default class NeoAccessor {
 
@@ -39,7 +51,6 @@ export default class NeoAccessor {
             links: edges
         }
     }
-
 
     private static async getNodes(creation_time?:string): Promise<Node[]> {
         //returns array of all nodes 
@@ -74,8 +85,6 @@ export default class NeoAccessor {
                 ${creation_time ? `WHERE p.created_at > $creation_time` : ""}
                 RETURN p.arxiv,n.arxiv
             `
-            // ${creation_time && `WHERE p.created_at > $creation_time`}
-
         let edges: Edge[] = [];
 
         const session = driver.session()
@@ -182,6 +191,40 @@ export default class NeoAccessor {
         }
     }
 
+    public static async getReferncingIDs(arxiv: string): Promise<string[]> {
+        // directly fetch all nodes that given paper is referencing
+        const session = driver.session();
+        try {
+            const result = await session.run(
+                'MATCH (p:Paper)-[:REFERENCES]->(target:Paper {arxiv: $arxiv}) RETURN p.arxiv',
+                { arxiv }
+            );
+            return result.records.map(record => record.get('p.arxiv'));
+        } catch (error) {
+            console.error('Error getting referencing papers:', error);
+            return [];
+        } finally {
+            await session.close();
+        }
+    }
+
+    public static async getReferencedIDs(arxiv: string): Promise<string[]> {
+        // directly fetch all nodes that given paper is being referenced by
+        const session = driver.session();
+        try {
+            const result = await session.run(
+                'MATCH (source:Paper {arxiv: $arxiv})-[:REFERENCES]->(p:Paper) RETURN p.arxiv',
+                { arxiv }
+            );
+            return result.records.map(record => record.get('p.arxiv'));
+        } catch (error) {
+            console.error('Error getting referenced papers:', error);
+            return [];
+        } finally {
+            await session.close();
+        }
+    }
+
     // public static async getReferencing(title: string) : Promise<Paper[]> { // REMOVE:
     //     // Returns all nodes that are referencing the node with given title.
     //     // returns empty list if paper not found
@@ -218,7 +261,7 @@ export default class NeoAccessor {
             console.log("Paper does not exist")
             paperID = await NeoAccessor.createPaper(paper,callback)
         }
-        await Promise.allSettled(references.map(r => this.pushReference(paperID,r,callback)))
+        await Promise.allSettled(references.map(r => this.pushReference(paperID,r)))
     }
 
 
@@ -230,7 +273,7 @@ export default class NeoAccessor {
                 QUERY,{...paper,created_at: NeoAccessor.getPushTime()}
             )
             const paperID: number = res.records[0]?.get("p").identity
-            if (callback) callback("Pushing Paper");
+            if (callback) callback(paper.arxiv);
             return paperID
         } catch (error) {
             console.error("Issue creating paper")
@@ -256,7 +299,7 @@ export default class NeoAccessor {
                 {title:paper.title,arxiv:paper.arxiv,properties:paper}
             )
             const paperID: number = res.records[0]?.get("p").identity   
-            if (callback) callback("Updating Paper");
+            if (callback) callback(paper.arxiv);
             return paperID
         } catch (error) {
             console.error(`Issue updating paper with title: ${paper.title}`)
@@ -266,7 +309,8 @@ export default class NeoAccessor {
         }
     }
 
-    private static async pushReference(paperid: Number, reference: Paper,callback?:(id:string)=>void): Promise<void> {
+    private static async pushReference(paperid: Number, reference: Paper): Promise<void> {
+        // ? Removed callback from pushReference. Shouldn't add nodes to graph when references are added.
         const session = driver.session() 
         const QUERY = `
         MATCH (p)
@@ -279,7 +323,6 @@ export default class NeoAccessor {
                 QUERY,
                 {paperId: paperid, ...reference,created_at: NeoAccessor.getPushTime()}
             )
-            if (callback) callback("Pushing Reference");
         } catch (error) {
             throw error
         } finally {

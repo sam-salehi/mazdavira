@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer,WebSocket } from "ws";
 import { v4 } from "uuid";
 import FetchPipeline from "@repo/controller/src/FetchPipeline.js"
 
@@ -6,22 +6,19 @@ import FetchPipeline from "@repo/controller/src/FetchPipeline.js"
 
 const wss = new WebSocketServer({ port: 8080 });
 
-const connections = {}
+let connections: Map<string,WebSocket> = new Map()
 
 type Message = {type:"bfs",arxiv:string,depth:number}
+type UUID = string
 
-
-
-
-
-wss.on("connection", (ws,request) => {
+wss.on("connection", (ws: WebSocket,request) => {
     console.log("New client connected");
-    const id = v4()
+    const id: UUID = v4()
     console.log("Declared as ", id)
-  connections[id] = ws
+    connections.set(id,ws)
 
   ws.on("message", (message: Buffer) => {
-    handleMessage(message)
+    handleMessage(message,id)
   });
 
   ws.on("close", () => handleClose(id));
@@ -29,33 +26,27 @@ wss.on("connection", (ws,request) => {
 
 console.log("WebSocket server running on ws://localhost:8080");
 
-
-
-function handleMessage(message: Buffer) {
+function handleMessage(message: Buffer,id:UUID) {
     const json: Message = JSON.parse(message.toString())
-    if (json.type === "bfs") callBFS(json.arxiv,json.depth)
+    if (json.type === "bfs") callBFS(json.arxiv,json.depth,(arxiv:string) => onExtractionCallback(arxiv,id))
 }
 
-
-function broadcastUpdate(arxivID: string) {
-    // lets all available connections know 
-    console.log("Sending broadcast out for: ", arxivID)
-    Object.values(connections).forEach((ws:WebSocket) => {
-        ws.send(JSON.stringify({updated: true, arxivID}))
-    })
+function onExtractionCallback(arxivID:string,id:UUID) {
+    const ws = connections.get(id)
+    ws.send(JSON.stringify({type:"extract-notice", arxiv: arxivID}))
+    broadcastUpdate(id)
 }
 
-
-// 1. 
-
-// 3. make loading bar to be displayed when user calls BFS until its completed. Setup state. 
-
-function callBFS(arxiv:string,depth:number) {
-    FetchPipeline.extractPaperWithDepth(arxiv,1,broadcastUpdate)
+function broadcastUpdate(callerID: UUID) {
+    // broadcast new nodes to be rendered to all users except the caller of BFS with callerID
+    connections.forEach(function(ws,id) {if (id != callerID) ws.send(JSON.stringify({type:"update-signal"}))})
 }
 
+function callBFS(arxiv:string,depth:number, callback: (arxiv:string) => void) {
+    FetchPipeline.extractPaperWithDepth(arxiv,1,callback)
+}
 
-function handleClose(id) {
-    delete connections[id]
+function handleClose(id: string) {
+    connections.delete(id)
     console.log("Closed connection with ", id)
 }

@@ -1,4 +1,4 @@
-import ForceGraph3D from "react-force-graph-3d";
+import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
 import NeoAccessor from "@repo/db/neo";
 import { chosenPaper } from "../page";
@@ -22,9 +22,7 @@ export default function ForceGraph({
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-  const {graphData} =  useGraphDataContext();
-  // setup api calls that calls back 
-  const graphRef = useRef(null);
+  const {graphData,graphRef} =  useGraphDataContext();
 
   useEffect(() => { 
     // pulls neighbours of selectedPaper from backend's id from backend

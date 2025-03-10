@@ -105,7 +105,8 @@ function FullPaperCard({
             </Button>
           </div>
           <div className="flex justify-between w-full">
-            <Button onClick={() => callBFS(id)}>Call BFS</Button>
+            <Button onClick={() => callBFS(id,1)}>Call BFS</Button> 
+            {/* FIXME: let user decide on depth. */}
             <PromptQuestionButton
               questionEntered={(question: string) =>
                 generateQuestionResponse(link, question)

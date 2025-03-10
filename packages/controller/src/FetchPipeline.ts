@@ -28,6 +28,7 @@ export default class FetchPipeline {
     public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<Paper[]> {
         // get llm to extract information about paper
         // callback defined in extractPaperWithDepth
+        // * calling method alone adds vacuous references to db. 
         if (!arxivID) return [];
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
