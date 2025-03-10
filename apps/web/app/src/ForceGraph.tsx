@@ -1,6 +1,6 @@
 import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
-import NeoAccessor from "@repo/db/neo";
+import NeoAccessor, { type Edge, type Node } from "@repo/db/neo";
 import { chosenPaper } from "../page";
 import { Paper } from "@repo/db/convert";
 import { useGraphDataContext } from "./GraphDataContext";
@@ -22,7 +22,26 @@ export default function ForceGraph({
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-  const {graphData,graphRef} =  useGraphDataContext();
+  const {graphRef,updateLastFetch} =  useGraphDataContext();
+
+  const [initData, setInitData] = useState<{   
+    nodes: Node[];
+    links: Edge[];
+  } | undefined>()
+
+
+  useEffect(() => {
+    // loads entire graph from backend for initial fetch
+    const fetchGraph = async () => {
+      const {nodes,links} = await NeoAccessor.getEntireGraph();
+      setInitData({nodes,links})
+    };
+    fetchGraph()
+    updateLastFetch()
+
+  },[]) // ! placing updateLastFetch as dependency forces re render
+
+  
 
   useEffect(() => { 
     // pulls neighbours of selectedPaper from backend's id from backend
@@ -36,7 +55,7 @@ export default function ForceGraph({
 
     getNeighbours(selectedPaper)
 
-  },[selectedPaper,graphData])
+  },[selectedPaper])
 
   console.log("Logging neighbors: ")
   console.log(selectedPapersNeighbors)
@@ -132,10 +151,10 @@ export default function ForceGraph({
 
   return (
     <div className="">
-      {graphData && (
+      {initData && (
         <ForceGraph3D
           ref={graphRef}
-          graphData={graphData}
+          graphData={initData}
           backgroundColor="#000000"
           nodeAutoColorBy={"recCount"}
           nodeColor={setNodeColor}

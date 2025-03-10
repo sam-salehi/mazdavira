@@ -9,10 +9,9 @@ const SOCKET_URL = "ws://localhost:8080"
 type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string} // ? move to config file
 
 interface GraphDataType {
-    graphData: {nodes: Node[], links: Edge[]}
-    setGraphData: () => void,
     callBFS: (id:string,depth:number) => void,
     graphRef: any,
+    updateLastFetch: ()=>void,
 }
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
@@ -21,22 +20,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
 
     const graphRef = useRef(null)
-
-    const [graphData, setGraphData] = useState<{
-        nodes: Node[];
-        links: Edge[];
-      }>();
-
-      useEffect(() => { // laods entire graph from backend for inital fetch
-        const fetchGraph = async () => {
-          const data = await NeoAccessor.getEntireGraph();
-          setGraphData(data);
-        };
-        fetchGraph();
-        setLastFetch(getISODate())
-      }, []);
-
-
 
     
     // * sendMessage sends message to 
@@ -68,6 +51,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
     // * lastFetch is ISO 860 string of last fetch time.
       const [lastFetch,setLastFetch] = useState<string>("");
+      const updateLastFetch = () =>  {const date = new Date();setLastFetch(date.toString());} 
+
 
 
     function callBFS(arxiv:string,depth:number) {
@@ -79,14 +64,13 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         if (!canUpdate) return
         const {nodes: newNodes,links:newLinks} = await NeoAccessor.getNewGraph(lastFetch)
         // ? how do I handle duplicates
-        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-            return {
-                nodes: [...nodes, ...newNodes],
-                links: [...links, ...newLinks],
-            };
-        })
-
-        setLastFetch(getISODate())
+        // setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+        //     return {
+        //         nodes: [...nodes, ...newNodes],
+        //         links: [...links, ...newLinks],
+        //     };
+        // })
+        updateLastFetch()
         setCanUpdate(false) 
     }
 
@@ -123,17 +107,11 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
     }
 
-    // if edge is incomplete keep dark
-
-
-
-
 
       const value = {
-        graphData,
-        setGraphData,
         callBFS,
-        graphRef
+        graphRef,
+        updateLastFetch
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }
@@ -147,11 +125,6 @@ export const useGraphDataContext = () => {
     return context
 }
 
-
-function getISODate(): string {
-    const date = new Date()
-    return date.toString()
-}
 
 
 function parsePaperForGraph(paper: Paper): Node {
