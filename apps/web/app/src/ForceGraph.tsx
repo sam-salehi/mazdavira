@@ -1,4 +1,4 @@
-import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
+import ForceGraph3D from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
 import NeoAccessor, { type Edge, type Node } from "@repo/db/neo";
 import { chosenPaper } from "../page";
@@ -22,25 +22,7 @@ export default function ForceGraph({
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-  const {graphRef,updateLastFetch} =  useGraphDataContext();
-
-  const [initData, setInitData] = useState<{   
-    nodes: Node[];
-    links: Edge[];
-  } | undefined>()
-
-
-  useEffect(() => {
-    // loads entire graph from backend for initial fetch
-    const fetchGraph = async () => {
-      const {nodes,links} = await NeoAccessor.getEntireGraph();
-      setInitData({nodes,links})
-    };
-    fetchGraph()
-    updateLastFetch()
-
-  },[]) // ! placing updateLastFetch as dependency forces re render
-
+  const {graphData,graphRef,updateLastFetch} =  useGraphDataContext();
   
 
   useEffect(() => { 
@@ -56,9 +38,6 @@ export default function ForceGraph({
     getNeighbours(selectedPaper)
 
   },[selectedPaper])
-
-  console.log("Logging neighbors: ")
-  console.log(selectedPapersNeighbors)
 
 
   const zoomOntoNode = function (node: any) {
@@ -149,12 +128,17 @@ export default function ForceGraph({
     }
   };
 
+  console.log("graphRef")
+  console.log(graphRef.current)
+  console.log("Loading graph data: ")
+  if (graphRef.currrent) console.log(graphRef.current.graphData())
+
   return (
     <div className="">
-      {initData && (
+      {graphData && (
         <ForceGraph3D
           ref={graphRef}
-          graphData={initData}
+          graphData={graphData}
           backgroundColor="#000000"
           nodeAutoColorBy={"recCount"}
           nodeColor={setNodeColor}
@@ -162,6 +146,7 @@ export default function ForceGraph({
           onNodeClick={handleNodeClick}
           onLinkClick={handleEdgeClick}
           nodeLabel={(node) => node.title}
+          enableNodeDrag={false}
         />
       )}
     </div>

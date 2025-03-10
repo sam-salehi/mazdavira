@@ -1,6 +1,7 @@
 import { createContext, ReactNode,useContext,useEffect,useRef,useState } from "react";
 import NeoAccessor, {type Edge,type Node, type Paper } from "@repo/db/neo";
 import useWebSocket from 'react-use-websocket';
+import { ForceGraphMethods } from 'react-force-graph-3d';
 
 // Context provider for nodes passed onto the graph.
 
@@ -9,6 +10,8 @@ const SOCKET_URL = "ws://localhost:8080"
 type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string} // ? move to config file
 
 interface GraphDataType {
+    graphData: {nodes: Node[], links: Edge[]},
+    setGraphData: () => void;
     callBFS: (id:string,depth:number) => void,
     graphRef: any,
     updateLastFetch: ()=>void,
@@ -19,7 +22,27 @@ const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
 export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  => {
 
 
-    const graphRef = useRef(null)
+    const [graphData,setGraphData] = useState<{   
+        nodes: Node[];
+        links: Edge[];
+      } | undefined>();
+
+
+      useEffect(() => {
+        // loads entire graph from backend for intial fetch
+        const fetchGraph = async () => {
+            const {nodes,links} = await NeoAccessor.getEntireGraph();
+            setGraphData({nodes,links})
+        }
+        fetchGraph()
+        updateLastFetch()
+      }, [])
+
+
+
+
+
+    const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
 
     
     // * sendMessage sends message to 
@@ -31,13 +54,11 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
             console.log("Given message")
             console.log(msg)
             if (msg.type === "update-signal") {
-                console.log("Update signal recieved")
                 setCanUpdate(true) // user could add new nodes it they want            
             } else if (msg.type === "extract-notice") {
-                console.log("Calling bfs")
                 addBFSNode(msg.arxiv)
             } else {
-                console.log("failed")
+                throw new Error("Invalid message recieved from scoket: ")
             }
     }
 
@@ -54,6 +75,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
       const updateLastFetch = () =>  {const date = new Date();setLastFetch(date.toString());} 
 
 
+    
+
 
     function callBFS(arxiv:string,depth:number) {
         sendMessage(JSON.stringify({type:"bfs",arxiv:arxiv,depth:depth}))
@@ -64,12 +87,12 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         if (!canUpdate) return
         const {nodes: newNodes,links:newLinks} = await NeoAccessor.getNewGraph(lastFetch)
         // ? how do I handle duplicates
-        // setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-        //     return {
-        //         nodes: [...nodes, ...newNodes],
-        //         links: [...links, ...newLinks],
-        //     };
-        // })
+        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+            return {
+                nodes: [...nodes, ...newNodes],
+                links: [...links, ...newLinks],
+            };
+        })
         updateLastFetch()
         setCanUpdate(false) 
     }
@@ -92,23 +115,23 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                 newLinks.push({source:id,target:arxiv})
             })
 
-            // todo should just fetch graphdata on mount.
-            // todo change call below to asynchronouly load dynamic data https://github.com/vasturiano/3d-force-graph/blob/master/example/dynamic/index.html
-            // push new information onto graph
-            // setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-            //     return {
-            //         nodes: [...nodes, node],
-            //         links: [...links, ...newLinks],
-            //     };
-            // })
+            // push ne w information onto graph
+            setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+                return {
+                    nodes: [...nodes,node],
+                    links: [...links, ...newLinks],
+                };
+            })
+
         } else {
             console.error("Paper not found in database for ",arxiv)
         }
 
     }
 
-
       const value = {
+        graphData,
+        setGraphData,
         callBFS,
         graphRef,
         updateLastFetch
