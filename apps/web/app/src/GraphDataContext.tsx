@@ -73,11 +73,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     // * lastFetch is ISO 860 string of last fetch time.
       const [lastFetch,setLastFetch] = useState<string>("");
       const updateLastFetch = () =>  {const date = new Date();setLastFetch(date.toString());} 
-
-
-    
-
-
     function callBFS(arxiv:string,depth:number) {
         sendMessage(JSON.stringify({type:"bfs",arxiv:arxiv,depth:depth}))
     }
@@ -115,10 +110,10 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                 newLinks.push({source:id,target:arxiv})
             })
 
-            // push ne w information onto graph
+            // push new information onto graph
             setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
                 return {
-                    nodes: [...nodes,node],
+                    nodes: [...nodes.filter(n => n != node),node],
                     links: [...links, ...newLinks],
                 };
             })
