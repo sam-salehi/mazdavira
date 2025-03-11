@@ -24,6 +24,8 @@ export default function ForceGraph({
   
   const {graphData} =  useGraphDataContext();
   
+  const graphRef = useRef()
+  
 
   useEffect(() => { 
     // pulls neighbours of selectedPaper from backend's id from backend
@@ -134,6 +136,7 @@ export default function ForceGraph({
     <div className="">
       {graphData && (
         <ForceGraph3D
+          ref = {graphRef}
           graphData={graphData}
           backgroundColor="#000000"
           nodeAutoColorBy={"recCount"}

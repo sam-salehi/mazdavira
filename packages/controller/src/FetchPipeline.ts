@@ -17,6 +17,7 @@ export default class FetchPipeline {
         // arxivID is the id for the root )
         // callback is to be called after a paper or reference is added to DB.
         // This is used to tell server to send a message to front end saying it can display new nodes.
+        console.log("Searching with depth ", depth)
         if (!arxivID || depth === 0) return
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
         const extractedPapers: Paper[] = await this.extractPaper(arxivID,callback)

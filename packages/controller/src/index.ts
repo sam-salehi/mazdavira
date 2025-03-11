@@ -14,13 +14,13 @@ import { Paper } from "@repo/db/convert";
 
 
 
-const today = new Date();
-today.setDate(today.getDate() - 1);
-const yesterdayISOString = today.toISOString();
+// const today = new Date();
+// today.setDate(today.getDate() - 1);
+// const yesterdayISOString = today.toISOString();
 
 
-const {nodes,links} = await NeoAccessor.getNewGraph(yesterdayISOString);
+// const {nodes,links} = await NeoAccessor.getNewGraph(yesterdayISOString);
 
 
-console.log(nodes)
-console.log(links)
+// console.log(nodes)
+// console.log(links)
