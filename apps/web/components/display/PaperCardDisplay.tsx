@@ -71,7 +71,7 @@ function FullPaperCard({
   const { generateSummary, generateQuestionResponse } = useChatContext();
   const { openChat } = useSideBarContext();
   // const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
-  const {callBFS} = useGraphDataContext()
+
 
 
   const handleSummaryGeneration = function () {
@@ -105,8 +105,7 @@ function FullPaperCard({
             </Button>
           </div>
           <div className="flex justify-between w-full">
-            <Button onClick={() => callBFS(id,2)}>Call BFS</Button> 
-            {/* FIXME: let user decide on depth. */}
+           <PromptBFSButton arxiv={id}/>
             <PromptQuestionButton
               questionEntered={(question: string) =>
                 generateQuestionResponse(link, question)
@@ -120,12 +119,56 @@ function FullPaperCard({
   );
 }
 
+
+function PromptBFSButton({arxiv}: {arxiv:string}) {
+  const {callBFS} = useGraphDataContext()
+  const [depth,setDepth] = useState<number | "">("")
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleKeyChange =  (val: string) => {
+    if (val === "") {
+      setDepth("");
+      return;
+    }
+    
+    const n = Number(val);
+    if (!isNaN(n) && n >= 0) {
+      setDepth(Math.min(n, 5)); // Set depth to the minimum of n and 5
+    }
+  }
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (depth !== 0 && depth !== "") {
+        callBFS(arxiv,depth)
+        setIsOpen(false);
+      }
+    }
+  };
+
+  return <Popover open={isOpen} onOpenChange={setIsOpen}>
+  <PopoverTrigger asChild>
+    <Button onClick={() => setIsOpen(true)}>Call BFS</Button>
+  </PopoverTrigger>
+  <PopoverContent>
+    <Input
+      placeholder="Enter Depth"
+      value={depth?.toString()}
+      onChange={(e) => handleKeyChange(e.target.value)}
+      onKeyDown={handleKeyDown}
+      maxLength={1} // Optional: Limit input length to 1 character
+    />
+  </PopoverContent>
+</Popover>
+}
+
 function PromptQuestionButton({
   questionEntered,
 }: {
   questionEntered: (question: string) => void;
 }) {
   const [question, setQuestion] = useState<string>("");
+  const [isOpen,setIsOpen] = useState(false);
 
   const { openChat } = useSideBarContext();
 
@@ -133,14 +176,15 @@ function PromptQuestionButton({
     if (e.key === "Enter") {
       e.preventDefault();
       questionEntered(question);
+      setIsOpen(false);
       openChat();
     }
   };
 
   return (
-    <Popover>
+    <Popover open={isOpen}>
       <PopoverTrigger asChild>
-        <Button>Ask Question</Button>
+        <Button onClick={()=>setIsOpen(true)}>Ask Question</Button>
       </PopoverTrigger>
       <PopoverContent>
         <Input
@@ -171,9 +215,6 @@ export function PartialPaperCard({
   handleAddBtn?: () => void,
   isAdded?:boolean
 }) {
-
-  console.log(authors)
-  console.log(year)
 
   return (
     <Card className="w-full max-w-2xl cursor-pointer h-fit mb-5" onClick={onClick}>

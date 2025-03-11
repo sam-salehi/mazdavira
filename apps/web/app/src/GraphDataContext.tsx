@@ -13,7 +13,6 @@ interface GraphDataType {
     graphData: {nodes: Node[], links: Edge[]},
     setGraphData: () => void;
     callBFS: (id:string,depth:number) => void,
-    graphRef: any,
     updateLastFetch: ()=>void,
 }
 
@@ -38,11 +37,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         updateLastFetch()
       }, [])
 
-
-
-
-
-    const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
+    // const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
 
     
     // * sendMessage sends message to 
@@ -74,6 +69,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
       const [lastFetch,setLastFetch] = useState<string>("");
       const updateLastFetch = () =>  {const date = new Date();setLastFetch(date.toString());} 
     function callBFS(arxiv:string,depth:number) {
+        // * depth can't be more than five
+        if (depth > 5) throw new RangeError(`Depth ${depth} exceeds the maximum allowed value of ${5}.`);
         sendMessage(JSON.stringify({type:"bfs",arxiv:arxiv,depth:depth}))
     }
 
@@ -128,12 +125,10 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         graphData,
         setGraphData,
         callBFS,
-        graphRef,
         updateLastFetch
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }
-
 
 export const useGraphDataContext = () => {
     const context = useContext(GraphDataContext)
@@ -142,8 +137,6 @@ export const useGraphDataContext = () => {
     }
     return context
 }
-
-
 
 function parsePaperForGraph(paper: Paper): Node {
     // used to turn type Paper fetched form db suitable for graph.

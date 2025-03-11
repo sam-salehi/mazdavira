@@ -22,7 +22,7 @@ export default function ForceGraph({
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-  const {graphData,graphRef,updateLastFetch} =  useGraphDataContext();
+  const {graphData} =  useGraphDataContext();
   
 
   useEffect(() => { 
@@ -128,16 +128,12 @@ export default function ForceGraph({
     }
   };
 
-  console.log("graphRef")
-  console.log(graphRef.current)
-  console.log("Loading graph data: ")
-  if (graphRef.currrent) console.log(graphRef.current.graphData())
+
 
   return (
     <div className="">
       {graphData && (
         <ForceGraph3D
-          ref={graphRef}
           graphData={graphData}
           backgroundColor="#000000"
           nodeAutoColorBy={"recCount"}

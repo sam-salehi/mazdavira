@@ -43,7 +43,7 @@ function broadcastUpdate(callerID: UUID) {
 }
 
 function callBFS(arxiv:string,depth:number, callback: (arxiv:string) => void) {
-    FetchPipeline.extractPaperWithDepth(arxiv,1,callback)
+    FetchPipeline.extractPaperWithDepth(arxiv,depth,callback)
 }
 
 function handleClose(id: string) {
