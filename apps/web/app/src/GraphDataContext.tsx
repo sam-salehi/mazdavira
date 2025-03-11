@@ -79,45 +79,52 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         if (!canUpdate) return
         const {nodes: newNodes,links:newLinks} = await NeoAccessor.getNewGraph(lastFetch)
         // ? how do I handle duplicates
-        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-            return {
-                nodes: [...nodes, ...newNodes],
-                links: [...links, ...newLinks],
-            };
-        })
+        updateGraphData(newNodes,newLinks)
         updateLastFetch()
         setCanUpdate(false) 
     }
 
     async function addBFSNode(arxiv: string) {
         // get nodes and edges associated to arxiv from graph.
-        console.log("Adding new node for ", arxiv)
-        // ? what happens with duplicates?
+        console.log("Adding new node for ", arxiv);
         // fetch related information
-        const paper: Paper | undefined = await NeoAccessor.getPaper(arxiv)
+        const paper: Paper | undefined = await NeoAccessor.getPaper(arxiv);
         if (paper) {
-            const node: Node = parsePaperForGraph(paper)
-            const referencingID = await NeoAccessor.getReferncingIDs(arxiv)
-            const referencedID = await NeoAccessor.getReferencedIDs(arxiv)
-            const newLinks: Edge[] = []
+            const node: Node = parsePaperForGraph(paper);
+            const referencingID = await NeoAccessor.getReferncingIDs(arxiv);
+            const referencedID = await NeoAccessor.getReferencedIDs(arxiv);
+            const newLinks: Edge[] = [];
+
             referencingID.forEach((id) => {
-                newLinks.push({source:arxiv,target:id})
-            })
+                newLinks.push({ source: arxiv, target: id });
+            });
             referencedID.forEach((id) => {
-                newLinks.push({source:id,target:arxiv})
-            })
-
+                newLinks.push({ source: id, target: arxiv });
+            });
             // push new information onto graph
-            setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-                return {
-                    nodes: [...nodes.filter(n => n != node),node],
-                    links: [...links, ...newLinks],
-                };
-            })
-
+            updateGraphData([node],newLinks)
         } else {
-            console.error("Paper not found in database for ",arxiv)
+            console.error("Paper not found in database for ", arxiv);
         }
+    }
+
+
+    function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
+        // adds newNodes and newLinks to graphData without creating duplicates
+        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+            // Check for duplicates in nodes
+            const existingNodes = new Set(nodes.map((node) => node.id))
+            const uniqueNewNodes = newNodes.filter(node => !existingNodes.has(node.id))
+
+            // Check for duplicates in links
+            const existingLinkIds = new Set(links.map(link => `${link.source}-${link.target}`));
+            const uniqueNewLinks = newLinks.filter(link => !existingLinkIds.has(`${link.source}-${link.target}`));
+
+            return {
+                nodes: [...nodes, ...uniqueNewNodes], 
+                links: [...links, ...uniqueNewLinks], 
+            };
+        });
 
     }
 
