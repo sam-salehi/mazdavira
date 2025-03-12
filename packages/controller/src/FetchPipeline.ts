@@ -72,13 +72,11 @@ export default class FetchPipeline {
 
     private static async fetchPaperDetails(p: paperInfo | reference): Promise<Paper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
-
         // don't extract information about paper if already in db. Just take it out
         if (p.arxiv) {
             const paper = await  NeoAccessor.getPaper(p.arxiv)
             if (paper) return paper
         }
-    
     
         const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([
             getReferencedCount(p.arxiv || ""),
