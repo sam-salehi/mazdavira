@@ -21,7 +21,6 @@ export default class FetchPipeline {
         if (!arxivID || depth === 0) return
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
         const extractedPapers: Paper[] = await this.extractPaper(arxivID,callback)
-        console.log("Extracted local paper")
         extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
     }
 
@@ -34,8 +33,6 @@ export default class FetchPipeline {
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
         const pdf:string = await PaperExtractor.extractMetaData(link);
-        console.log("Extracted pdf")
-        console.log(pdf)
 
         await LLMSemaphore.acquire();
         let info: paperInfo | undefined = undefined;
@@ -64,11 +61,10 @@ export default class FetchPipeline {
         // used to turn Gemini output to distinct papers to be passed for model extraction.
         const srcPaper = await this.fetchPaperDetails(info);
 
-        console.log("Number of references before filtering for arxiv papers: ",info.references.length)
+        console.log("Reference count before filtering:",info.references.length)
         // filtering for reference papers that have arxivid's only.
         const references: reference[] = info.references.filter(ref => (ref.arxiv != undefined))
-        console.log("Number after filtering: ", references.length)
-
+        console.log("Reference count after filtering:", references.length)
 
         const referencedPapers = await Promise.all(references.map(ref => this.fetchPaperDetails(ref)));
         return [srcPaper,referencedPapers]
@@ -79,7 +75,6 @@ export default class FetchPipeline {
 
         // don't extract information about paper if already in db. Just take it out
         if (p.arxiv) {
-            console.log("Returning found paper: ", p.arxiv)
             const paper = await  NeoAccessor.getPaper(p.arxiv)
             if (paper) return paper
         }

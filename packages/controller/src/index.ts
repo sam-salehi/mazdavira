@@ -3,7 +3,7 @@ import { TriggerClient } from "@trigger.dev/sdk";
 import axios from "axios"
 import * as cheerio from 'cheerio';
 // import { extractReferencesFromPDF } from "@repo/fetch/src/pdfExtracter.js";
-import {fetchPaperPDFLink, getReferencedCount } from "@repo/fetch/src/urlFetcher.js" 
+import {extractArxivId, fetchPaperPDFLink, getReferencedCount } from "@repo/fetch/src/urlFetcher.js" 
 import { generateSummary } from "@repo/model/src/referanceExtraction.js";
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 
@@ -18,9 +18,12 @@ import { Paper } from "@repo/db/convert";
 // today.setDate(today.getDate() - 1);
 // const yesterdayISOString = today.toISOString();
 
+FetchPipeline.extractPaperWithDepth("1706.03762",3)
+// const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
+// const pdfLink = await fetchPaperPDFLink("1706.03762")
+// console.log(pdfLink)
+// console.log(pdfLink)
+// const pdf = await PaperExtractor.fetchPDF(pdfLink)
+// const arxiv = PaperExtractor.extractReferenceSection(pdf)
+// console.log(arxiv)
 
-// const {nodes,links} = await NeoAccessor.getNewGraph(yesterdayISOString);
-
-
-// console.log(nodes)
-// console.log(links)

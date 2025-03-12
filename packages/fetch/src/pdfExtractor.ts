@@ -5,8 +5,8 @@ export class PaperExtractor {
 
     public static async extractMetaData(url:string): Promise<string> {
         const paper: string = await PaperExtractor.fetchPDF(url);
-        let metadata:string = PaperExtractor.extractTitleSection(paper)
-        metadata += PaperExtractor.extractArxivMentions(paper)
+        let metadata: string = PaperExtractor.extractTitleSection(paper)
+        metadata += PaperExtractor.extractReferenceSection(paper)
         return metadata
     }
 
@@ -30,7 +30,7 @@ export class PaperExtractor {
             docs.map(page => result += page.pageContent)
             return result
         } catch (error) {
-            console.log(`Could not fetch pdf from ${url}.`)
+            console.log(`Could not fetch pdf from ${url}`)
             console.error(error)
             return result
         }
@@ -42,30 +42,29 @@ export class PaperExtractor {
         if (k) return pdfContent.slice(0,k);
         return ""
     }
-    
 
 
-    private static extractArxivMentions(pdfContent: string) : string {
-        // finds all lines that have arxiv mentioned and those entire lines
-        const lines = pdfContent.split("\n")
-        let arxivLines = ""
-        for (const line of lines) {
-            if (line.toLowerCase().includes("arxiv")){
-                arxivLines += line + '\n'
-            }
+    public static extractReferenceSection(pdfContent:string) : string {
+        // start with references section till end of line of last arxiv mention in the paper.
+        const startingIndex = pdfContent.search(/references/i)
+
+
+        const regex = /arxiv/gi;
+
+        // get last mention of arxiv references
+        let match;
+        let lastArxivRef = 0
+        while ((match = regex.exec(pdfContent)) !== null) {
+            lastArxivRef  = Math.max(lastArxivRef,match.index)
         }
-        return arxivLines
+
+        // get the end of line of last arxiv mentiond
+        const remainingPDF = pdfContent.slice(lastArxivRef)
+        let lastIndex = lastArxivRef + remainingPDF.search(/\n/)
+
+
+        return pdfContent.slice(startingIndex,lastIndex)
     }
-
-
-
-    // private static extractReferenceSection(pdfContent: string): string{
-    //     const regex = /references/i;
-    //     const k = pdfContent.search(regex);
-    //     if (k) return pdfContent.slice(k);
-    //     return ""
-    // }
-
 
 }
 

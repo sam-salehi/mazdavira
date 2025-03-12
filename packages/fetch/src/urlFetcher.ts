@@ -9,7 +9,7 @@ dotenv.config({path: ""});
 
 
 
-export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{ 
+export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
   // adapt to work with doi and title if arxiv is not available.
   return ArxivAPI.fetchPaper(arxiv)
 }
@@ -36,8 +36,6 @@ class ArxivAPI {
   // Arxiv related API's
     public static async fetchPaper(arxivId: string): Promise<string | null> {
       // returns paper pdf given ArxivId
-      console.log("Arxivid")
-      console.log(arxivId)
       const ARXIV_API = `http://export.arxiv.org/api/query?id_list=${encodeURIComponent(arxivId)}`;
       try {
           const response = await axios.get<any>(ARXIV_API);
