@@ -71,7 +71,7 @@ export default class NeoAccessor {
         const QUERY = `
             MATCH (p:Paper)
             ${creation_time ? `WHERE p.created_at > $creation_time` : ""}
-            RETURN p.title as title, p.arxiv as arxiv, p.referenced_count as refCount
+            RETURN p.title as title, p.arxiv as arxiv, p.referenced_count as refCount, p.extracted as extracted
             `
 
         let nodes: Node[] = [];
@@ -83,7 +83,7 @@ export default class NeoAccessor {
             } else {
                 result = await session.run(QUERY)
             }
-            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount:rec._fields[2]}))
+            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount:rec._fields[2], extracted: rec._fields[3]}))
         } catch (error) {
             console.error("There was an issue fetching all nodes", error)
             throw error

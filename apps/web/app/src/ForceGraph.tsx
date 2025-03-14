@@ -117,8 +117,9 @@ export default function ForceGraph({
 
   const setNodeColor = function (node): string {
     // add one for those being the neighbor of the selected Paper.
-    if (selectedPapersNeighbors.has(node.id)) return "rgb(255,204,0,1)"
-    
+    if (selectedPapersNeighbors.has(node.id)) return "rgb(255,204,0,1)" 
+    if (!node.extracted) return "rgb(128, 128, 128)"
+
     switch (node.id) {
       case hoverNodeID:
         return "rgb(0,0,139,1)";
