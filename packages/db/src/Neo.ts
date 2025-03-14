@@ -274,6 +274,9 @@ export default class NeoAccessor {
     }
     public static async updatePaper(paper:Paper,callback?:(id:string)=>void): Promise<number> {
         // assuming that paper exists 
+
+        console.log("Updating paper")
+        console.log(paper)
         const session = driver.session()
         const QUERY = `
             MATCH (p:Paper {arxiv: $arxiv})

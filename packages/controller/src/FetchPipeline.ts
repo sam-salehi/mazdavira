@@ -53,6 +53,8 @@ export default class FetchPipeline {
         LLMSemaphore.release();
 
         // TableAccessor.pushPapers(papers)
+        console.log("outside")
+        console.log(srcPaper)
         NeoAccessor.pushExtraction(srcPaper,referencedPapers,callback) // async 
         return referencedPapers
     }
@@ -74,11 +76,7 @@ export default class FetchPipeline {
     private static async fetchPaperDetails(p: paperInfo): Promise<Paper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
         // don't extract information about paper if already in db. Just take it out
-        if (p.arxiv) {
-            const paper = await  NeoAccessor.getPaper(p.arxiv)
-            if (paper) return paper
-        }
-        const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([
+        const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([ 
             getReferencedCount(p.arxiv),
             fetchPaperPDFLink(p.arxiv),
             !p.arxiv? fetchArxivID(p.title): p.arxiv
