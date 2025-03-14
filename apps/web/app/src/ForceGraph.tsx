@@ -1,8 +1,7 @@
 import ForceGraph3D from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
-import NeoAccessor, { type Edge, type Node } from "@repo/db/neo";
+import NeoAccessor, { type Edge, type Node, type GenericPaper } from "@repo/db/neo";
 import { chosenPaper } from "../page";
-import { Paper } from "@repo/db/convert";
 import { useGraphDataContext } from "./GraphDataContext";
 
 export default function ForceGraph({
@@ -32,7 +31,7 @@ export default function ForceGraph({
     // they are in turn used to color edges
     const getNeighbours = async function(arxiv:string) {
 
-      const neighbors: Paper[] = await NeoAccessor.getReferences(arxiv)
+      const neighbors: GenericPaper[] = await NeoAccessor.getReferences(arxiv)
       const neighborIDs: string[] = neighbors.map(n => n.arxiv)
       setSelectedPapersNeighbors(new Set(neighborIDs))
     }

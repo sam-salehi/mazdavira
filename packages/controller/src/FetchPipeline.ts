@@ -34,6 +34,10 @@ export default class FetchPipeline {
         if (!link) return []
         const pdf:string = await PaperExtractor.extractMetaData(link);
 
+        if (await NeoAccessor.isPaperExtracted(arxivID)) {
+            return await NeoAccessor.getReferences(arxivID)
+        }
+
         await LLMSemaphore.acquire();
         let info: paperInfo | undefined = undefined;
 
@@ -48,11 +52,10 @@ export default class FetchPipeline {
                 await new Promise(resolve => setTimeout(resolve,5000))
             }   
         }
-        info.arxiv = arxivID // just give arxiv yourself for safety
+        info.arxiv = arxivID // just passing arxiv for safety
         const [srcPaper, referencedPapers]= await this.castToPapers(info)
         LLMSemaphore.release();
 
-        // TableAccessor.pushPapers(papers)
         console.log("outside")
         console.log(srcPaper)
         NeoAccessor.pushExtraction(srcPaper,referencedPapers,callback) // async 

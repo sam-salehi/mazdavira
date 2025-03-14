@@ -5,16 +5,15 @@ import { string } from "zod";
 // const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
 // Papers which are not extracted.
 
-interface GenericPaper {
+export interface GenericPaper {
     title: string,
     arxiv: string,
     pdf_link: string | null,
     extracted: boolean
 }
 
-// Representing papers that have not been extracted by llm
+// Representing papers that have not been extracted by llm or for just passing basic information around.
 export interface VacuousPaper extends GenericPaper {
-    extracted: false
 }
 
 // Papers that have been extracted 
@@ -164,6 +163,7 @@ export default class NeoAccessor {
     }
 
     public static async getPaperPDFLink(title:string): Promise<string>  {
+        // ! remove
         const QUERY = `
             MATCH (p:Paper {title: $title})
             RETURN p.pdf_link
@@ -183,7 +183,7 @@ export default class NeoAccessor {
         }
     }
 
-    public static async getReferences(arxiv: string) : Promise<Paper[]> {
+    public static async getReferences(arxiv: string) : Promise<GenericPaper[]> {
         // returns all neighbours referenced by given title. 
         // Returns empty list if paper not found
         const session = driver.session()
@@ -204,6 +204,31 @@ export default class NeoAccessor {
             return referencedPapers
         }
     }
+
+    public static async isPaperExtracted(arxiv:string): Promise<boolean> {
+
+        const session = driver.session()
+        const QUERY = `
+            MATCH (p:Paper {arxiv: $arxiv})
+            RETURN p.extracted
+        `
+        try {
+            const result = await session.run(QUERY,{arxiv: arxiv})
+            return !!result.records[0]?.get('p.extracted')
+        } catch (error) {   
+            console.error(`Was not able to see wether ${arxiv} was extracted`, error)
+            throw error
+        }
+    }
+
+
+
+    // const session = driver.session()
+    // let pdfLink: string = "";
+    // try {
+    //     const result = await session.run(QUERY, { title: title });
+    //     pdfLink = result.records[0]?.get('p.pdf_link') || ""; 
+
 
     public static async getReferncingIDs(arxiv: string): Promise<string[]> {
         // directly fetch all nodes that given paper is referencing
@@ -342,6 +367,8 @@ export default class NeoAccessor {
             session.close()
         }
     }
+
+
 }
 
 
