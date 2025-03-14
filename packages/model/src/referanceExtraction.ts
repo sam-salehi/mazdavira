@@ -10,10 +10,8 @@ const GEMINI_MODEL_NAME = "gemini-2.0-flash-exp"
 function mapReferences(refs: any[]): reference[] {
     return refs.map(ref => ({
         title: ref.title,
-        authors: ref.author,
-        pub_year: ref.pubYear,
         arxiv: PaperInfoFormatter.formatArxivID(ref.arxiv),
-        doi: ref.doi
+        
     }));
 }
 // Main function to extract information
@@ -34,7 +32,6 @@ export async function extractInformation(paper: string): Promise<paperInfo> {
         institutions: object.institutions,
         references: mapReferences(object.references),
         arxiv: PaperInfoFormatter.formatArxivID(object.arxiv),
-        doi: object.doi
     };
 
     return paperInfoObject; // Return the constructed object

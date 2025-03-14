@@ -1,5 +1,4 @@
 import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
-import pdf from "pdf-parse"
 
 export class PaperExtractor {
 
@@ -43,14 +42,11 @@ export class PaperExtractor {
         return ""
     }
 
-
     public static extractReferenceSection(pdfContent:string) : string {
         // start with references section till end of line of last arxiv mention in the paper.
         const startingIndex = pdfContent.search(/references/i)
 
-
         const regex = /arxiv/gi;
-
         // get last mention of arxiv references
         let match;
         let lastArxivRef = 0
@@ -62,10 +58,8 @@ export class PaperExtractor {
         const remainingPDF = pdfContent.slice(lastArxivRef)
         let lastIndex = lastArxivRef + remainingPDF.search(/\n/)
 
-
         return pdfContent.slice(startingIndex,lastIndex)
     }
-
 }
 
 

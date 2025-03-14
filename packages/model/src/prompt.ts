@@ -11,7 +11,7 @@ export const SUMMARY_GENERATION_PROMPT = `You will be given a research paper's e
 
 
 
-export const EXTRACTING_REFERENCES_PROMPT = `You will be given a research paper and be asked to extract the information setout below. Please make sure the title and authors prompts are well formatted.
+export const EXTRACTING_REFERENCES_PROMPT = `You will be given a research paper and be asked to extract the information setout below. Please make sure the title and authors respect capitals. 
 title: the title of the paper
 authors: a list of authors of the paper
 pubYear: the year the paper was published
@@ -19,12 +19,10 @@ arxiv: papers arxiv number if one exists e.g 2301.12345. Dont add arxiv
 doi: papers doi if mentioned. Don't write null
 intitutions: which institutions the writers of the paper are from. i.e. institutions and companies. Just give the name of the instituion
 refCount: number of references made by the paper
-refrences: a list of objects, where each object is made some of the definitions mentioned. These objects require title, author,pubyear, arxiv and doi.
-
+refrences: a list of objects, where each object is made some of the definitions mentioned. These objects require title and arxiv. Ignore the references that do not include arxiv identifiers.
 <paper>
 {paper}
 </paper>
-
 `
 
 const CONNECTION_GENERATION_PROMPT = `Look for the relevant citation inside the text but don't mention these excplicitly. State how they are used to push the author's arguments. Don't be afraid of being technical and make sure you are curtain of the response. 

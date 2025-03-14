@@ -1,34 +1,48 @@
 import { QueryConfig, ResultSummary, session } from "neo4j-driver";
 import driver from "../../db/src/config.js";
+import { string } from "zod";
 
 // const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
+// Papers which are not extracted.
 
-
-
-export type Paper = {
+interface GenericPaper {
     title: string,
+    arxiv: string,
+    pdf_link: string | null,
+    extracted: boolean
+}
+
+// Representing papers that have not been extracted by llm
+export interface VacuousPaper extends GenericPaper {
+    extracted: false
+}
+
+// Papers that have been extracted 
+export interface Paper extends GenericPaper {
     authors: string[],
     institutions: string[],
     pub_year: number,
-    arxiv: string,
-    doi: string | null,
     referencing_count: number | null,
     referenced_count: number | null,
-    pdf_link: string | null
-
+    extracted: true
 }
-
 
 
 export type Node = { // used for presenting nodes and edges on Graph visualization.
     id: string; // arxiv id
     title: string;
     refCount: number;
+    extracted: boolean // for displaying in dimmer color
 }
 
 export type Edge = {
     source: string,
     target: string
+}
+
+function getPushTime() {
+    // used to set Paper.created_at property
+    return new Date().toISOString();
 }
 
 export default class NeoAccessor {
@@ -139,7 +153,7 @@ export default class NeoAccessor {
         try {
             const result = await session.run(QUERY,{arxiv:arxiv})
             const node = result.records[0]?.get('p').properties
-            if (node) nodePaper = NeoAccessor.convertToPaper(node)
+            if (node) nodePaper = QueryHelper.convertToPaper(node)
         } catch (error) {
             console.error(`Issue getting paper with arxiv id ${arxiv}`, error)
             throw error
@@ -181,7 +195,7 @@ export default class NeoAccessor {
         let referencedPapers: Paper[] = []
         try {
             const result = await session.run(QUERY,{arxiv:arxiv})
-            result.records.forEach((res) => referencedPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
+            result.records.forEach((res) => referencedPapers.push(QueryHelper.convertToPaper(res.get('n').properties)))
         } catch (error) {
             console.error(`Issue fetching neighbours of paper ${arxiv}: `,error)
             throw error
@@ -225,52 +239,28 @@ export default class NeoAccessor {
         }
     }
 
-    // public static async getReferencing(title: string) : Promise<Paper[]> { // REMOVE:
-    //     // Returns all nodes that are referencing the node with given title.
-    //     // returns empty list if paper not found
-    //     const session = driver.session()
-    //     const QUERY = `
-    //         MATCH (n)-[r:REFERENCED]->(paper:Paper)
-    //         WHERE paper.title = $title
-    //         RETURN n
-    //     `
-    //     let referencingPapers: Paper[] = []
-    //     try {
-    //         const result = await session.run(QUERY,{title:title})
-    //         result.records.forEach((res) => referencingPapers.push(NeoAccessor.convertToPaper(res.get('n').properties)))
-    //     } catch (error) {
-    //         console.error(`Issue fetching neighbours of paper ${title}: `,error)
-    //         throw error
-    //     } finally {
-    //         session.close()
-    //         return referencingPapers
-    //     }
-
-    // }
-
     public static async getReferencesWithDepth(title: string) {
         // probably not required. 
     }
 
-    public static async pushExtraction(paper: Paper, references: Paper[],callback?:(id:string)=>void): Promise<void> {
+    public static async pushExtraction(paper: Paper, references: VacuousPaper[],callback?:(id:string)=>void): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
         let paperID:number;
         if (await NeoAccessor.paperExists(paper.arxiv)) {
             paperID = await NeoAccessor.updatePaper(paper,callback)
         } else {
-            console.log("Paper does not exist")
             paperID = await NeoAccessor.createPaper(paper,callback)
         }
         await Promise.allSettled(references.map(r => this.pushReference(paperID,r)))
     }
 
 
-    public static async createPaper(paper:Paper,callback?:(id:string)=>void): Promise<number> {
+    public static async createPaper(paper:GenericPaper,callback?:(id:string)=>void): Promise<number> {
         const session = driver.session()
-        const QUERY =  `CREATE (p:${this.generatePaperQuery(paper)})\nRETURN p`
+        const QUERY =  `CREATE (p:${QueryHelper.generatePaperQuery(paper)})\nRETURN p`
         try {
             const res = await session.run(
-                QUERY,{...paper,created_at: NeoAccessor.getPushTime()}
+                QUERY,{...paper,created_at: getPushTime()}
             )
             const paperID: number = res.records[0]?.get("p").identity
             if (callback) callback(paper.arxiv);
@@ -282,8 +272,6 @@ export default class NeoAccessor {
             session.close()
         }
     }
-
-
     public static async updatePaper(paper:Paper,callback?:(id:string)=>void): Promise<number> {
         // assuming that paper exists 
         const session = driver.session()
@@ -296,7 +284,7 @@ export default class NeoAccessor {
         try {
             const res = await session.run(
                 QUERY,
-                {title:paper.title,arxiv:paper.arxiv,properties:paper}
+                {arxiv:paper.arxiv,properties:paper}
             )
             const paperID: number = res.records[0]?.get("p").identity   
             if (callback) callback(paper.arxiv);
@@ -309,20 +297,23 @@ export default class NeoAccessor {
         }
     }
 
-    private static async pushReference(paperid: Number, reference: Paper): Promise<void> {
-        // ? Removed callback from pushReference. Shouldn't add nodes to graph when references are added.
+    private static async pushReference(paperid: Number, reference: VacuousPaper,callback?: (arxiv:string)=>void): Promise<void> {
+        // connects the given refeerence to the paper with Neo4j identifier paperid. 
+        // if such reference does't exist, it crates vaccuous node.
+        // ** references only need to be Vacuous on extraction from another paper
         const session = driver.session() 
         const QUERY = `
         MATCH (p)
         where id(p) = $paperId
-        MERGE (ref: Paper{arxiv:$arxiv}) ON CREATE SET ref += ${this.generatePaperQuery(reference).replace("Paper ","")}
+        MERGE (ref: Paper{arxiv:$arxiv}) ON CREATE SET ref += ${QueryHelper.generatePaperQuery(reference).replace("Paper ","")}
         MERGE (p)-[:REFERENCED]->(ref)
         `
         try {
             const res = await session.run(
                 QUERY,
-                {paperId: paperid, ...reference,created_at: NeoAccessor.getPushTime()}
+                {paperId: paperid, ...reference,created_at: getPushTime()}
             )
+            if (callback) callback(reference.arxiv)
         } catch (error) {
             throw error
         } finally {
@@ -348,21 +339,27 @@ export default class NeoAccessor {
             session.close()
         }
     }
+}
 
 
-    private static generatePaperQuery(paper: Paper): string {
-        // Creates proper cypher query, ignoring nulls
-        const properties = this.getPropertyTable(paper,true)
+class QueryHelper {
 
-        // Filter out properties with undefined values and construct the query
+    public static generatePaperQuery(paper:GenericPaper) {
+        let properties;
+        if (paper.extracted) {
+            properties = this.getPropertyTable(paper as Paper,true)
+        } else {
+            properties = this.getVacuousPropertyTable(paper as VacuousPaper)
+        }
+
         const queryParts = properties
-            .filter(prop => prop.value !== undefined && prop.value !== null) 
-            .map(prop => `${prop.key}: $${prop.key}`); 
-        return `Paper { ${queryParts.join(", ")} }`;
+        .filter(prop => prop.value !== undefined && prop.value !== null) 
+        .map(prop => `${prop.key}: $${prop.key}`); 
+    return `Paper { ${queryParts.join(", ")} }`;
     }
 
-    private static convertToPaper(node: any): Paper {
-        const properties = NeoAccessor.getPropertyTable(node,false)
+    public static convertToPaper(node: any): Paper {
+        const properties = this.getPropertyTable(node,false)
         const definedProps = properties.reduce((acc, { key, value }) => {
             if (value !== undefined) {
                 acc[key] = value;
@@ -372,26 +369,32 @@ export default class NeoAccessor {
         return definedProps as Paper
     }
 
-    private static getPropertyTable(node: any,createDateTime: boolean): Array<{ key: string; value: any }>{
+    private static getPropertyTable(node: Paper,createDateTime: boolean): Array<{ key: string; value: any }>{
         const properties: Array<{ key: string; value: any }> = [
             { key: "title", value: node.title },
             { key: "authors", value: node.authors },
             { key: "institutions", value: node.institutions },
             { key: "pub_year", value: node.pub_year },
             { key: "arxiv", value: node.arxiv },
-            { key: "doi", value: node.doi },
             { key: "referencing_count", value: node.referencing_count },
             { key: "referenced_count", value: node.referenced_count },
             { key: "pdf_link", value: node.pdf_link }, 
+            {key: "extracted", value: true}     
         ];
-        // ISO 8601 Compatible datatime.
-        if (createDateTime) properties.push({key:"created_at", value: new Date().toISOString()}) 
 
+        if (createDateTime) properties.push({key:"created_at", value: getPushTime()}) 
         return properties
     }
 
-    private static getPushTime() {
-        // used to set Paper.created_at property
-        return new Date().toISOString();
+    private static getVacuousPropertyTable(node: VacuousPaper): Array<{ key: string; value: any }>{
+        const properties: Array<{ key: string; value: any }> = [
+            { key: "title", value: node.title },
+            { key: "arxiv", value: node.arxiv },
+            { key: "pdf_link", value: node.pdf_link }, 
+            {key: "extracted", value: false} ,
+            {key:"created_at", value: getPushTime()}
+        ];
+        return properties
     }
+
 }

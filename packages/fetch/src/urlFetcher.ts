@@ -10,12 +10,9 @@ dotenv.config({path: ""});
 
 
 export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
-  // adapt to work with doi and title if arxiv is not available.
   return ArxivAPI.fetchPaper(arxiv)
 }
 
-
-// const semaphore: Semaphore = new Semaphore(1)
 
 export async function  getReferencedCount(arxiv:string): Promise<number | null> {
   return 0 // FIXME:
@@ -28,21 +25,16 @@ export async function fetchArxivID(title:string) : Promise<string | null> {
   return ArxivAPI.fecthArxivID(title);
 }
 
-
-// fetch ARXIV pdf link:
-
-
 class ArxivAPI {  
   // Arxiv related API's
     public static async fetchPaper(arxivId: string): Promise<string | null> {
-      // returns paper pdf given ArxivId
+      // returns paper's pdf link
       const ARXIV_API = `http://export.arxiv.org/api/query?id_list=${encodeURIComponent(arxivId)}`;
       try {
           const response = await axios.get<any>(ARXIV_API);
           const xml = await parseStringPromise(response.data)
           const linkObj: { $: { title: string; href: string } } | undefined = xml.feed.entry[0].link.find((i: { $: { title: string; href: string } }) => i.$.title === "pdf");
           const link = linkObj ? linkObj.$.href : null;
-
           return link
       } catch (error) {
           console.error(`Error fetching paper URL from ArXiv for ${arxivId}:`, error);

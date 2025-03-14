@@ -2,12 +2,13 @@ import {type paperInfo, type reference} from "@repo/model/src/config.js"
 import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
-import { Paper } from "@repo/db/convert"
-import NeoAccessor from "@repo/db/neo"
+import NeoAccessor, {Paper, VacuousPaper} from "@repo/db/neo"
 import Semaphore from "./semaphore.js"
 
 
-const LLMSemaphore = new Semaphore(3) // seems reasonable for llm response.
+
+
+const LLMSemaphore = new Semaphore(3) 
 
 export default class FetchPipeline {
 
@@ -20,15 +21,14 @@ export default class FetchPipeline {
         console.log("Searching with depth ", depth)
         if (!arxivID || depth === 0) return
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
-        const extractedPapers: Paper[] = await this.extractPaper(arxivID,callback)
-        extractedPapers.forEach(paper =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
+        const extractedPapers: VacuousPaper[] = await this.extractPaper(arxivID,callback)
+        extractedPapers.forEach((paper:VacuousPaper) =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
     }
 
 
-    public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<Paper[]> {
+    public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<VacuousPaper[]> {
         // get llm to extract information about paper
         // callback defined in extractPaperWithDepth
-        // * calling method alone adds vacuous references to db. 
         if (!arxivID) return [];
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
@@ -53,12 +53,13 @@ export default class FetchPipeline {
         LLMSemaphore.release();
 
         // TableAccessor.pushPapers(papers)
-        if (srcPaper) NeoAccessor.pushExtraction(srcPaper,referencedPapers,callback) //async 
+        NeoAccessor.pushExtraction(srcPaper,referencedPapers,callback) // async 
         return referencedPapers
     }
 
-    private static async castToPapers(info: paperInfo): Promise<[Paper,Paper[]]> {
+    private static async castToPapers(info: paperInfo): Promise<[Paper,VacuousPaper[]]> {
         // used to turn Gemini output to distinct papers to be passed for model extraction.
+        // as well as call api's for further info
         const srcPaper = await this.fetchPaperDetails(info);
 
         console.log("Reference count before filtering:",info.references.length)
@@ -66,38 +67,59 @@ export default class FetchPipeline {
         const references: reference[] = info.references.filter(ref => (ref.arxiv != undefined))
         console.log("Reference count after filtering:", references.length)
 
-        const referencedPapers = await Promise.all(references.map(ref => this.fetchPaperDetails(ref)));
+        const referencedPapers = await Promise.all(references.map(ref => this.fetchReferencePaperDetails(ref)));
         return [srcPaper,referencedPapers]
     }
 
-    private static async fetchPaperDetails(p: paperInfo | reference): Promise<Paper> {
+    private static async fetchPaperDetails(p: paperInfo): Promise<Paper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
         // don't extract information about paper if already in db. Just take it out
         if (p.arxiv) {
             const paper = await  NeoAccessor.getPaper(p.arxiv)
             if (paper) return paper
         }
-    
         const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([
-            getReferencedCount(p.arxiv || ""),
-            fetchPaperPDFLink(p.arxiv || ""),
+            getReferencedCount(p.arxiv),
+            fetchPaperPDFLink(p.arxiv),
             !p.arxiv? fetchArxivID(p.title): p.arxiv
         ]);
 
         const refCount: number | null = refCountResult.status === 'fulfilled' ? refCountResult.value : null;
         const pdfSourceLink: string | null = pdfSourceLinkResult.status === 'fulfilled' ? pdfSourceLinkResult.value : null;
+        // ! remove ||'s
         return {
             title: p.title,
             authors: p.authors,
-            institutions: (p as paperInfo).institutions || [],
+            institutions: p.institutions || [],
             pub_year: p.pub_year,
             arxiv: p.arxiv || "",
-            doi: p.doi || null,
-            referencing_count: (p as paperInfo).referencing_count || null,
+            referencing_count: p.referencing_count || null,
             referenced_count: refCount,
             pdf_link: pdfSourceLink,
+            extracted: true
         };
     }
-    
 
+
+    private static async fetchReferencePaperDetails(p: reference): Promise<VacuousPaper> {
+        let paper : VacuousPaper;
+        
+        const fp = await NeoAccessor.getPaper(p.arxiv)
+        if (fp) {
+            return {
+                title: fp.title,
+                arxiv: fp.arxiv,
+                pdf_link: fp.pdf_link,
+                extracted: false
+            }
+        } else {
+            const pdfLink = await fetchPaperPDFLink(p.arxiv)
+            return {
+                title: p.title,
+                arxiv: p.arxiv,
+                pdf_link: pdfLink,
+                extracted: false
+            }
+        }
+    }
 }

@@ -30,7 +30,9 @@ import { Paper } from "@repo/db/convert";
 
 
 
-console.log("Fetching pdf")
-const pdfLink = await fetchPaperPDFLink("1706.03762")
-console.log(pdfLink)
-console.log("Recieved pdf")
+// console.log("Fetching pdf")
+// const pdfLink = await fetchPaperPDFLink("1706.03762")
+// console.log(pdfLink)
+// console.log("Recieved pdf")
+
+// FetchPipeline.extractPaperWithDepth("1706.03762",2)
