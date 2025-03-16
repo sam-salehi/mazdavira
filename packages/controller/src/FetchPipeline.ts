@@ -2,7 +2,7 @@ import {type paperInfo, type reference} from "@repo/model/src/config.js"
 import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
-import NeoAccessor, {FullPaper, VacuousPaper} from "@repo/db/neo"
+import NeoAccessor, {FullPaper, GenericPaper, VacuousPaper,makeVacuousPaper} from "@repo/db/neo"
 import Semaphore from "./semaphore.js"
 
 
@@ -21,12 +21,12 @@ export default class FetchPipeline {
         console.log("Searching with depth ", depth)
         if (!arxivID || depth === 0) return
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
-        const extractedPapers: VacuousPaper[] = await this.extractPaper(arxivID,callback)
-        extractedPapers.forEach((paper:VacuousPaper) =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
+        const extractedPapers: GenericPaper[] = await this.extractPaper(arxivID,callback)
+        extractedPapers.forEach((paper:GenericPaper) =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
     }
 
 
-    public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<VacuousPaper[]> {
+    public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<GenericPaper[]> {
         // get llm to extract information about paper
         // callback defined in extractPaperWithDepth
         if (!arxivID) return [];
@@ -34,6 +34,7 @@ export default class FetchPipeline {
         if (!link) return []
         const pdf:string = await PaperExtractor.extractMetaData(link);
 
+        // get all references already if extracted from paper before.
         if (await NeoAccessor.isPaperExtracted(arxivID)) {
             return await NeoAccessor.getReferences(arxivID)
         }
@@ -94,9 +95,9 @@ export default class FetchPipeline {
             institutions: p.institutions || [],
             pub_year: p.pub_year,
             arxiv: p.arxiv || "",
-            referencing_count: p.referencing_count || null,
-            referenced_count: refCount,
-            pdf_link: pdfSourceLink,
+            referencing_count: p.referencing_count,
+            referenced_count: refCount || 0,
+            pdf_link: pdfSourceLink || "",
             extracted: true
         };
     }
@@ -107,20 +108,10 @@ export default class FetchPipeline {
         
         const fp = await NeoAccessor.getPaper(p.arxiv)
         if (fp) {
-            return {
-                title: fp.title,
-                arxiv: fp.arxiv,
-                pdf_link: fp.pdf_link,
-                extracted: false
-            }
+            return  makeVacuousPaper(fp.title,fp.arxiv,fp.pdf_link || "")
         } else {
             const pdfLink = await fetchPaperPDFLink(p.arxiv)
-            return {
-                title: p.title,
-                arxiv: p.arxiv,
-                pdf_link: pdfLink,
-                extracted: false
-            }
+            return makeVacuousPaper(p.title,p.arxiv,pdfLink || "")
         }
     }
 }

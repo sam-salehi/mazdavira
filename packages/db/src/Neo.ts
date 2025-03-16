@@ -8,9 +8,13 @@ import { string } from "zod";
 export interface GenericPaper {
     title: string,
     arxiv: string,
-    pdf_link: string | null,
-    authors: string[]
     extracted: boolean
+    pdf_link: string,
+    authors: string[]
+    institutions: string[],
+    pub_year: number,
+    referencing_count: number,
+    referenced_count: number,
 }
 
 // Representing papers that have not been extracted by llm or for just passing basic information around.
@@ -22,23 +26,24 @@ export interface VacuousPaper extends GenericPaper {
     referenced_count: 0,
     extracted: false
 }
-export type Paper = {
-
-}
 
 // Papers that have been extracted 
 export interface FullPaper extends GenericPaper {
-    authors: string[],
-    institutions: string[],
-    pub_year: number,
-    referencing_count: number,
-    referenced_count: number,
     extracted: true
 }
 
 export const isFullPaper = function(p: GenericPaper):boolean {
     return p.extracted
   }
+
+export const makeVacuousPaper = function(title:string,arxiv:string,pdf_link:string): VacuousPaper {
+    return {
+        title: title,
+        arxiv: arxiv,
+        pdf_link: pdf_link,
+    } as VacuousPaper
+}
+
 
 
 export type Node = { // used for presenting nodes and edges on Graph visualization.
@@ -197,6 +202,21 @@ export default class NeoAccessor {
         }
     }
 
+
+    public static async isPaperExtracted(arxiv: string): Promise<boolean> {
+        const session = driver.session()
+        const QUERY = `
+            MATCH (paper:Paper)    
+            WHERE paper.arxiv = $arxiv
+            RETURN paper.extracted
+        `
+        const result = await session.run(QUERY,{arxiv:arxiv})
+        const isExtracted = result.records[0]?.get('paper.extracted') || false
+        session.close()
+        return isExtracted
+    }
+
+
     public static async getReferences(arxiv: string) : Promise<GenericPaper[]> {
         // returns all neighbours referenced by given title. 
         // Returns empty list if paper not found
@@ -206,7 +226,7 @@ export default class NeoAccessor {
             WHERE paper.arxiv = $arxiv
             RETURN n
         `
-        let referencedPapers: FullPaper[] = []
+        let referencedPapers: GenericPaper[] = []
         try {
             const result = await session.run(QUERY,{arxiv:arxiv})
             result.records.forEach((res) => referencedPapers.push(QueryHelper.convertToPaper(res.get('n').properties)))
