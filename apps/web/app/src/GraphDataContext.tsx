@@ -18,8 +18,6 @@ interface GraphDataType {
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
 
 export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  => {
-
-
     const [graphData,setGraphData] = useState<{   
         nodes: Node[];
         links: Edge[];
@@ -73,7 +71,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         // gets and adds all data to graphData since last fetch
         if (!canUpdate) return
         const {nodes: newNodes,links:newLinks} = await NeoAccessor.getNewGraph(lastFetch)
-        // ? how do I handle duplicates
         updateGraphData(newNodes,newLinks)
         updateLastFetch()
         setCanUpdate(false) 
@@ -81,20 +78,18 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
     async function addBFSNode(arxiv: string) {
         // get nodes and edges associated to arxiv from graph.
-        console.log("Adding new node for ", arxiv);
         // fetch related information
         const paper: GenericPaper | null = await NeoAccessor.getPaper(arxiv);
         if (paper) {
             const fp: FullPaper = paper as FullPaper
             const node: Node = parsePaperForGraph(fp);
-            const referencingID = await NeoAccessor.getReferncingIDs(arxiv);
-            const referencedID = await NeoAccessor.getReferencedIDs(arxiv);
+            const referencingIDs = await NeoAccessor.getReferencingIDs(arxiv); // those arxiv is referencing
+            const referencedIDs = await NeoAccessor.getReferencedIDs(arxiv); // those arxiv is referenced by
             const newLinks: Edge[] = [];
-
-            referencingID.forEach((id) => {
+            referencingIDs.forEach((id) => {
                 newLinks.push({ source: arxiv, target: id });
             });
-            referencedID.forEach((id) => {
+            referencedIDs.forEach((id) => {
                 newLinks.push({ source: id, target: arxiv });
             });
             // push new information onto graph
@@ -105,6 +100,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     }
 
     const makeEdgeString = (source:string,target:string) =>  `${source}-${target}`
+
     const makeUpdatedNodes = function(oldNodes: Node[], newNodes: Node[]): Node[]  {
         // newNodes set and oldNodes updated
         const existingNodes = new Map<string,Node>();
@@ -120,6 +116,15 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         const uniqueNewLinks = newLinks.filter(link => !existingLinkIds.has(makeEdgeString(link.source,link.target)));
         return [...oldLinks,...uniqueNewLinks]
     }
+
+    // const makeUpdatedEdges = function(oldLinks: Edge[], newLinks: Edge[], id: string| null): Edge[] {
+    //     // id is for the node which we're adding links for
+    //     // remove all oldLinks corresponding to id. append with new Links
+    //     // TODO tailor for both calling funcitons
+    //     const independantLinks = oldLinks.filter(link => (link.source !== id && link.target !== id))
+    //     return [...independantLinks,...newLinks]
+    // }
+
 
     function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
         // adds newNodes and newLinks to graphData without creating duplicates
@@ -137,26 +142,23 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
     function updateNodeInGraphData(newNode: Node, newLinks: Edge[]) {
         // handle updating individual nodes seperately for memory efficiancy
-        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+        console.log("Recieved new links: ", newLinks.length)
 
-            
+        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
             const nodeIndex = nodes.findIndex((n:Node) => n.id === newNode.id)
             if (nodeIndex === -1) {
                 nodes.push(newNode)
             } else {
                 nodes[nodeIndex] = newNode
             }
-
             const aggregatedLinks = makeUpdatedEdges(links,newLinks)
-            
+
             return {
                 nodes: [...nodes], 
                 links: [...aggregatedLinks], 
             };
         });
-
     }
-
       const value = {
         graphData,
         setGraphData,

@@ -22,6 +22,7 @@ export default function ForceGraph({
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
   const {graphData} =  useGraphDataContext();
+  console.log(graphData)
   
   const graphRef = useRef()
   
@@ -98,7 +99,6 @@ export default function ForceGraph({
       ]);
     }
   };
-
   const setNodeColor = function (node): string {
     // add one for those being the neighbor of the selected Paper.
     if (node.id === selectedPaper) return "rgb(220,0,0,1)";
@@ -108,9 +108,6 @@ export default function ForceGraph({
     return "rgba(0,255,255,0.6)";
 
   };
-
-
-
   return (
     <div className="">
       {graphData && (

@@ -258,50 +258,31 @@ export default class NeoAccessor {
 
 
 
-    // const session = driver.session()
-    // let pdfLink: string = "";
-    // try {
-    //     const result = await session.run(QUERY, { title: title });
-    //     pdfLink = result.records[0]?.get('p.pdf_link') || ""; 
+    public static async getReferencedIDs(arxiv: string): Promise<string[]> {
+        // directly fetch all nodes that given paper is referenced by
+        const session = driver.session();
+        const result = await session.run(
+            'MATCH (p:Paper)-[:REFERENCED]->(target:Paper {arxiv: $arxiv}) RETURN p.arxiv',
+            { arxiv }
+        );
+        session.close()
+        const res = result.records.map(record => record.get('p.arxiv'));
+        return res
+    }
 
-
-    public static async getReferncingIDs(arxiv: string): Promise<string[]> {
+    public static async getReferencingIDs(arxiv: string): Promise<string[]> {
         // directly fetch all nodes that given paper is referencing
         const session = driver.session();
-        try {
-            const result = await session.run(
-                'MATCH (p:Paper)-[:REFERENCES]->(target:Paper {arxiv: $arxiv}) RETURN p.arxiv',
-                { arxiv }
-            );
-            return result.records.map(record => record.get('p.arxiv'));
-        } catch (error) {
-            console.error('Error getting referencing papers:', error);
-            return [];
-        } finally {
-            await session.close();
-        }
+        const result = await session.run(
+            'MATCH (source:Paper {arxiv: $arxiv})-[:REFERENCED]->(p:Paper) RETURN p.arxiv',
+            { arxiv }
+        );
+        await session.close();
+        const res = result.records.map(record => record.get('p.arxiv'))
+        console.log("Recieved referenced IDS: ", res)
+        return res;
     }
 
-    public static async getReferencedIDs(arxiv: string): Promise<string[]> {
-        // directly fetch all nodes that given paper is being referenced by
-        const session = driver.session();
-        try {
-            const result = await session.run(
-                'MATCH (source:Paper {arxiv: $arxiv})-[:REFERENCES]->(p:Paper) RETURN p.arxiv',
-                { arxiv }
-            );
-            return result.records.map(record => record.get('p.arxiv'));
-        } catch (error) {
-            console.error('Error getting referenced papers:', error);
-            return [];
-        } finally {
-            await session.close();
-        }
-    }
-
-    public static async getReferencesWithDepth(title: string) {
-        // probably not required. 
-    }
 
     public static async pushExtraction(paper: FullPaper, references: VacuousPaper[],callback?:(id:string[])=>void): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
