@@ -6,6 +6,8 @@ import SidebarButton from "@/components/ui/SideBarButton";
 import { ChatHistoryProvider } from "./src/ChatContext";
 import { SidebarProvider } from "./src/SideBarContext";
 import { GraphDataProvider } from "./src/GraphDataContext";
+import { GenericPaper, FullPaper } from "@repo/db/neo";
+import { isFullPaper } from "@repo/db/neo";
 
 export type chosenPaper = {
   title: string;
@@ -13,7 +15,26 @@ export type chosenPaper = {
   authors: string[];
   link: string;
   arxiv: string;
+  extracted: boolean,
 };
+
+export const makeChosenPaper = function(gp: GenericPaper): chosenPaper {
+  // conversts GenericPaper to chosenPaper for UI display handling difference between Paper and VaccuosusPaper.
+  const result: chosenPaper = {
+    title:gp.title,
+    year: 0,
+    authors: [],
+    link: gp.pdf_link || "",
+    arxiv: gp.arxiv,
+    extracted: gp.extracted
+  }
+  if (isFullPaper(gp)) {
+    const paper: FullPaper = gp as FullPaper 
+    result.authors = paper.authors
+    result.year = paper.pub_year
+  }
+  return result
+}
 
 export default function Home() {
   const [sideBarOpen, setSideBarOpen] = useState<boolean>(false);

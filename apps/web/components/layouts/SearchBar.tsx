@@ -1,7 +1,7 @@
 import { Input } from "../ui/input"
 import { Search } from 'lucide-react';
 import { useSearchContext } from "@/app/src/SearchContext";
-import { chosenPaper } from "@/app/page";
+import { chosenPaper, makeChosenPaper } from "@/app/page";
 import {PartialPaperCard} from "../display/PaperCardDisplay";
 import NeoAccessor from "@repo/db/neo";
 import { useSideBarContext } from "@/app/src/SideBarContext";
@@ -47,13 +47,7 @@ function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[
     async function  addChosenPaper(arxivID:string) {
         // catches paper with id from backend and passes appends it to chosenPapers
         const addedPaper = await NeoAccessor.getPaper(arxivID)
-        if (addedPaper) setChosenPapers((chosenPapers:chosenPaper[]) => [...chosenPapers,{
-            title:addedPaper.title,
-            year:addedPaper.pub_year,
-            authors:addedPaper.authors,
-            link: addedPaper.pdf_link,
-            arxiv: addedPaper.arxiv
-        }])
+        if (addedPaper) setChosenPapers((chosenPapers:chosenPaper[]) => [...chosenPapers,makeChosenPaper(addedPaper)])
     }
 
     return <div className=" h-[90%] overflow-y-scroll hide-scrollbar">

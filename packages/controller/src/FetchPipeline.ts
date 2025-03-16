@@ -2,7 +2,7 @@ import {type paperInfo, type reference} from "@repo/model/src/config.js"
 import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
-import NeoAccessor, {Paper, VacuousPaper} from "@repo/db/neo"
+import NeoAccessor, {FullPaper, VacuousPaper} from "@repo/db/neo"
 import Semaphore from "./semaphore.js"
 
 
@@ -62,7 +62,7 @@ export default class FetchPipeline {
         return referencedPapers
     }
 
-    private static async castToPapers(info: paperInfo): Promise<[Paper,VacuousPaper[]]> {
+    private static async castToPapers(info: paperInfo): Promise<[FullPaper,VacuousPaper[]]> {
         // used to turn Gemini output to distinct papers to be passed for model extraction.
         // as well as call api's for further info
         const srcPaper = await this.fetchPaperDetails(info);
@@ -76,7 +76,7 @@ export default class FetchPipeline {
         return [srcPaper,referencedPapers]
     }
 
-    private static async fetchPaperDetails(p: paperInfo): Promise<Paper> {
+    private static async fetchPaperDetails(p: paperInfo): Promise<FullPaper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
         // don't extract information about paper if already in db. Just take it out
         const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([ 

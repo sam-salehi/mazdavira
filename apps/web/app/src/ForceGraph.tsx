@@ -1,7 +1,7 @@
 import ForceGraph3D from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
-import NeoAccessor, { type Edge, type Node, type GenericPaper } from "@repo/db/neo";
-import { chosenPaper } from "../page";
+import NeoAccessor, {type GenericPaper } from "@repo/db/neo";
+import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
 
 export default function ForceGraph({
@@ -65,17 +65,13 @@ export default function ForceGraph({
   const handleNodeClick = async function (node: any) {
     zoomOntoNode(node);
     if (chosenPapers.find((paper) => paper.arxiv === node.id)) return;
-    const paper = await NeoAccessor.getPaper(node.id);
+    const paper: GenericPaper | null = await NeoAccessor.getPaper(node.id);
+    console.log("Fetched paper")
+    console.log(paper)
     if (paper) {
       openSideBar();
       setChosenPapers([
-        {
-          title: paper.title,
-          year: paper.pub_year,
-          authors: paper.authors,
-          link: paper.pdf_link || "",
-          arxiv: paper.arxiv,
-        },
+        makeChosenPaper(paper),
         ...chosenPapers,
       ]);
       setSelectedPaper(paper.arxiv);
@@ -96,20 +92,8 @@ export default function ForceGraph({
     if (sourcePaper && targetPaper) {
       openSideBar();
       setChosenPapers([
-        {
-          title: source.title,
-          year: source.pub_year,
-          authors: source.authors,
-          link: source.pdf_link,
-          arxiv: source.arxiv,
-        },
-        {
-          title: target.title,
-          year: target.pub_year,
-          authors: target.authors,
-          link: target.pdf_link,
-          arxiv: target.arxiv,
-        },
+        makeChosenPaper(source),
+        makeChosenPaper(target),
         ...chosenPapers,
       ]);
     }

@@ -1,7 +1,6 @@
-import { createContext, ReactNode,useContext,useEffect,useRef,useState } from "react";
-import NeoAccessor, {type Edge,type Node, type Paper } from "@repo/db/neo";
+import { createContext, ReactNode,useContext,useEffect,useState } from "react";
+import NeoAccessor, {type Edge,type Node, type FullPaper, GenericPaper } from "@repo/db/neo";
 import useWebSocket from 'react-use-websocket';
-import { ForceGraphMethods } from 'react-force-graph-3d';
 
 // Context provider for nodes passed onto the graph.
 
@@ -55,9 +54,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
             } else {
                 throw new Error("Invalid message recieved from scoket: ")
             }
-    }
-
-    },[readyState,lastMessage,readyState])
+    }},[readyState,lastMessage,readyState])
 
 
 
@@ -88,9 +85,10 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         // get nodes and edges associated to arxiv from graph.
         console.log("Adding new node for ", arxiv);
         // fetch related information
-        const paper: Paper | undefined = await NeoAccessor.getPaper(arxiv);
+        const paper: GenericPaper | null = await NeoAccessor.getPaper(arxiv);
         if (paper) {
-            const node: Node = parsePaperForGraph(paper);
+            const fp: FullPaper = paper as FullPaper
+            const node: Node = parsePaperForGraph(fp);
             const referencingID = await NeoAccessor.getReferncingIDs(arxiv);
             const referencedID = await NeoAccessor.getReferencedIDs(arxiv);
             const newLinks: Edge[] = [];
@@ -112,6 +110,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
         // adds newNodes and newLinks to graphData without creating duplicates
         setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+            // TODO: change updating to consider old nodes yet updated as well.
+
             // Check for duplicates in nodes
             const existingNodes = new Set(nodes.map((node) => node.id))
             const uniqueNewNodes = newNodes.filter(node => !existingNodes.has(node.id))
@@ -145,7 +145,7 @@ export const useGraphDataContext = () => {
     return context
 }
 
-function parsePaperForGraph(paper: Paper): Node {
+function parsePaperForGraph(paper: FullPaper): Node {
     // used to turn type Paper fetched form db suitable for graph.
-    return {id: paper.arxiv, title: paper.title, refCount: paper.referenced_count || 0}
+    return {id: paper.arxiv, title: paper.title, refCount: paper.referenced_count || 0, extracted: paper.extracted}
 }

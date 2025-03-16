@@ -26,6 +26,7 @@ export default function PaperCard({
   year,
   authors,
   link,
+  extracted,
   selected,
   onClick,
   onClose,
@@ -35,17 +36,19 @@ export default function PaperCard({
   year: number;
   authors: string[];
   link: string;
+  extracted: boolean,
   selected: boolean;
   onClick: () => void;
   onClose: () => void;
 }) {
   return selected ? (
     <FullPaperCard
-    id = {id}
+      id = {id}
       title={title}
       year={year}
       authors={authors}
       link={link}
+      extracted={extracted}
       onClose={onClose}
     />
   ) : (
@@ -59,6 +62,7 @@ function FullPaperCard({
   year,
   authors,
   link,
+  extracted,
   onClose,
 }: {
   id:string
@@ -66,18 +70,19 @@ function FullPaperCard({
   year: number;
   authors: string[];
   link: string;
+  extracted: boolean;
   onClose: () => void;
 }) {
   const { generateSummary, generateQuestionResponse } = useChatContext();
   const { openChat } = useSideBarContext();
   // const {handleSubmit} = useChat({api:"/api/chat" ,id:'chat',body:{pdfLink:link}});
-
-
-
   const handleSummaryGeneration = function () {
     generateSummary(title, link);
     openChat();
   };
+
+
+  if (extracted && authors.length == 0) console.log("Extracted: ",id, " Status", extracted)
 
   return (
     <>
@@ -87,21 +92,22 @@ function FullPaperCard({
           <X className="cursor-pointer" onClick={onClose} />
         </CardHeader>
 
+    
+        {extracted ?
+        <>
         <CardContent>
-          <p>{authors.reduce((acc, val) => acc + val + ", ")}</p>
+          <p>{authors.length > 0 ? authors.reduce((acc, val) => acc + val + ", ", "") : "No authors available"}</p>
           <p className="text-sm text-gray-700">{year}</p>
         </CardContent>
         <CardFooter className="flex flex-col gap-1">
           <div className="flex justify-between w-full">
             <Button
               onClick={() => window.open(link, "_blank")?.focus()}
-              className="flex items-center gap-2"
-            >
+              className="flex items-center gap-2">
               View Paper
             </Button>
             <Button onClick={handleSummaryGeneration}>
-              {" "}
-              Generate Summary{" "}
+              {" "}Generate Summary{" "}
             </Button>
           </div>
           <div className="flex justify-between w-full">
@@ -113,6 +119,19 @@ function FullPaperCard({
             />
           </div>
         </CardFooter>
+        </>: 
+        <CardFooter className="flex flex-col gap-1">
+        <div className="flex justify-between w-full">
+          <Button
+            onClick={() => window.open(link, "_blank")?.focus()}
+            className="flex items-center gap-2"
+          >
+            View Paper
+          </Button>
+          <PromptBFSButton arxiv={id}/>
+        </div>
+        </CardFooter>
+        }
       </Card>
 
     </>
@@ -226,12 +245,12 @@ export function PartialPaperCard({
         </CardTitle>
         {onClose && <X className="cursor-pointer" onClick={onClose} />}
       </CardHeader>
-      {(authors?.length && year) && 
+      {/* {(authors?.length && year) && 
       <CardContent className="pb-0">
           <p>{authors.reduce((acc, val) => acc + val + ", ")}</p>
           <p className="text-sm text-gray-700">{year}</p>
       </CardContent>
-      }
+      } */}
       {handleAddBtn ? !isAdded?
                   <Button className="ml-[80%] mb-2" onClick={handleAddBtn} >{" "}Add{" "}</Button>:
                   <Button className="ml-[80%] mb-2" onClick={handleAddBtn} disabled>{" "}Add{" "}</Button>:

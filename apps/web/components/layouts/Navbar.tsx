@@ -1,5 +1,8 @@
 import { chosenPaper } from "@/app/page";
 import PaperCard from "../display/PaperCardDisplay";
+
+
+
 function Navbar({
   chosenPapers,
   selectedPaper,
@@ -21,6 +24,7 @@ function Navbar({
           authors={paper.authors}
           year={paper.year}
           link={paper.link}
+          extracted={paper.extracted}
           selected={selectedPaper === paper.arxiv}
           onClick={() => onSelectPaper(paper.arxiv)}
           onClose={() =>

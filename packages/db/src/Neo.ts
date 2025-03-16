@@ -9,22 +9,36 @@ export interface GenericPaper {
     title: string,
     arxiv: string,
     pdf_link: string | null,
+    authors: string[]
     extracted: boolean
 }
 
 // Representing papers that have not been extracted by llm or for just passing basic information around.
 export interface VacuousPaper extends GenericPaper {
+    authors: []
+    institutions: []
+    pub_year: 0
+    referencing_count: 0,
+    referenced_count: 0,
+    extracted: false
+}
+export type Paper = {
+
 }
 
 // Papers that have been extracted 
-export interface Paper extends GenericPaper {
+export interface FullPaper extends GenericPaper {
     authors: string[],
     institutions: string[],
     pub_year: number,
-    referencing_count: number | null,
-    referenced_count: number | null,
+    referencing_count: number,
+    referenced_count: number,
     extracted: true
 }
+
+export const isFullPaper = function(p: GenericPaper):boolean {
+    return p.extracted
+  }
 
 
 export type Node = { // used for presenting nodes and edges on Graph visualization.
@@ -120,7 +134,7 @@ export default class NeoAccessor {
 
 
 
-    public static async getPapersByTitle(title: string): Promise<Paper[]> {
+    public static async getPapersByTitle(title: string): Promise<FullPaper[]> {
         // fetches papers containing given string inside title, case insensitive.
         const QUERY = `MATCH (p:Paper) 
                        WHERE toLower(p.title) CONTAINS toLower($title) 
@@ -129,7 +143,7 @@ export default class NeoAccessor {
         let nodePapers;
         try {
             const result = await session.run(QUERY, { title });
-            const nodes: Paper[] = result.records.map(record => record._fields[0].properties);
+            const nodes: FullPaper[] = result.records.map(record => record._fields[0].properties);
             return nodes;
         } catch (error) {
             console.error("Could not fetch paper by title", error);
@@ -140,7 +154,7 @@ export default class NeoAccessor {
         return [];
     }
 
-    public static async getPaper(arxiv: string): Promise<Paper | undefined>{
+    public static async getPaper(arxiv: string): Promise<GenericPaper | null>{
         // gets paper with given arxivdID. Returns null if none exists
         const QUERY = `
             MATCH (p:Paper {arxiv: $arxiv})
@@ -158,7 +172,7 @@ export default class NeoAccessor {
             throw error
         } finally {
             session.close()
-            return nodePaper
+            return nodePaper || null
         }
     }
 
@@ -192,7 +206,7 @@ export default class NeoAccessor {
             WHERE paper.arxiv = $arxiv
             RETURN n
         `
-        let referencedPapers: Paper[] = []
+        let referencedPapers: FullPaper[] = []
         try {
             const result = await session.run(QUERY,{arxiv:arxiv})
             result.records.forEach((res) => referencedPapers.push(QueryHelper.convertToPaper(res.get('n').properties)))
@@ -205,7 +219,7 @@ export default class NeoAccessor {
         }
     }
 
-    public static async isPaperExtracted(arxiv:string): Promise<boolean> {
+    public static async isFullPaperExtracted(arxiv:string): Promise<boolean> {
 
         const session = driver.session()
         const QUERY = `
@@ -268,7 +282,7 @@ export default class NeoAccessor {
         // probably not required. 
     }
 
-    public static async pushExtraction(paper: Paper, references: VacuousPaper[],callback?:(id:string)=>void): Promise<void> {
+    public static async pushExtraction(paper: FullPaper, references: VacuousPaper[],callback?:(id:string)=>void): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
         let paperID:number;
         if (await NeoAccessor.paperExists(paper.arxiv)) {
@@ -297,7 +311,7 @@ export default class NeoAccessor {
             session.close()
         }
     }
-    public static async updatePaper(paper:Paper,callback?:(id:string)=>void): Promise<number> {
+    public static async updatePaper(paper:FullPaper,callback?:(id:string)=>void): Promise<number> {
         // assuming that paper exists 
 
         console.log("Updating paper")
@@ -376,8 +390,8 @@ class QueryHelper {
 
     public static generatePaperQuery(paper:GenericPaper) {
         let properties;
-        if (paper.extracted) {
-            properties = this.getPropertyTable(paper as Paper,true)
+        if (isFullPaper(paper)) {
+            properties = this.getFullPropertyTable(paper as FullPaper,true)
         } else {
             properties = this.getVacuousPropertyTable(paper as VacuousPaper)
         }
@@ -388,18 +402,24 @@ class QueryHelper {
     return `Paper { ${queryParts.join(", ")} }`;
     }
 
-    public static convertToPaper(node: any): Paper {
-        const properties = this.getPropertyTable(node,false)
+    public static convertToPaper(node: any): GenericPaper {
+        // 
+        let properties;
+        if (isFullPaper(node)) {
+            properties = this.getFullPropertyTable(node,false) 
+        } else {
+            properties = this.getVacuousPropertyTable(node)
+        }
         const definedProps = properties.reduce((acc, { key, value }) => {
             if (value !== undefined) {
                 acc[key] = value;
             }
             return acc;
         }, {} as Record<string, any>);
-        return definedProps as Paper
+        return definedProps as GenericPaper
     }
 
-    private static getPropertyTable(node: Paper,createDateTime: boolean): Array<{ key: string; value: any }>{
+    private static getFullPropertyTable(node: FullPaper,createDateTime: boolean): Array<{ key: string; value: any }>{
         const properties: Array<{ key: string; value: any }> = [
             { key: "title", value: node.title },
             { key: "authors", value: node.authors },
@@ -409,10 +429,10 @@ class QueryHelper {
             { key: "referencing_count", value: node.referencing_count },
             { key: "referenced_count", value: node.referenced_count },
             { key: "pdf_link", value: node.pdf_link }, 
-            {key: "extracted", value: true}     
+            {key: "extracted", value: true}  
         ];
 
-        if (createDateTime) properties.push({key:"created_at", value: getPushTime()}) 
+        if (createDateTime) properties.push({key:"created_at", value: getPushTime()})  // ! remove getPushTime from here
         return properties
     }
 
