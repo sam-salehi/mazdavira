@@ -18,7 +18,7 @@ import { Paper } from "@repo/db/convert";
 // today.setDate(today.getDate() - 1);
 // const yesterdayISOString = today.toISOString();
 
-// FetchPipeline.extractPaperWithDepth("1706.03762",3)
+FetchPipeline.extractPaperWithDepth("1706.03762",1)
 // const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
 // const pdfLink = await fetchPaperPDFLink("1706.03762")
 // console.log(pdfLink)

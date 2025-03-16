@@ -41,6 +41,7 @@ export const makeVacuousPaper = function(title:string,arxiv:string,pdf_link:stri
         title: title,
         arxiv: arxiv,
         pdf_link: pdf_link,
+        extracted: false
     } as VacuousPaper
 }
 
@@ -361,6 +362,10 @@ export default class NeoAccessor {
         // connects the given refeerence to the paper with Neo4j identifier paperid. 
         // if such reference does't exist, it crates vaccuous node.
         // ** references only need to be Vacuous on extraction from another paper
+        console.log("Pushing reference", reference)
+        console.log("Generated Query: ", QueryHelper.generatePaperQuery(reference).replace("Paper ",""))
+
+
         const session = driver.session() 
         const QUERY = `
         MATCH (p)
