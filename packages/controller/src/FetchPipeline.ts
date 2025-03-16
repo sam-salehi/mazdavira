@@ -12,7 +12,7 @@ const LLMSemaphore = new Semaphore(3)
 
 export default class FetchPipeline {
 
-    public static async extractPaperWithDepth(arxivID:string | null, depth: number, callback?: (id:string)=>void) {
+    public static async extractPaperWithDepth(arxivID:string | null, depth: number, callback?: (id:string[])=>void) {
         // recursive tree, bfs on a paper and its references
         // REQUIRES: depth >= 0,  
         // arxivID is the id for the root )
@@ -26,7 +26,7 @@ export default class FetchPipeline {
     }
 
 
-    public static async extractPaper(arxivID: string,callback?:(id:string)=>void): Promise<GenericPaper[]> {
+    public static async extractPaper(arxivID: string,callback?:(id:string[])=>void): Promise<GenericPaper[]> {
         // get llm to extract information about paper
         // callback defined in extractPaperWithDepth
         if (!arxivID) return [];

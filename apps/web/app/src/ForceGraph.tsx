@@ -78,7 +78,7 @@ export default function ForceGraph({
     }
   };
 
-  const handleEdgeClick = async function ({ source, target }) { //FIXME: probably can just remove this
+  const handleEdgeClick = async function ({ source, target }) {
     if (
       chosenPapers.find(
         (paper) => paper.arxiv === source.id || paper.arxiv === target.id,
@@ -101,17 +101,12 @@ export default function ForceGraph({
 
   const setNodeColor = function (node): string {
     // add one for those being the neighbor of the selected Paper.
+    if (node.id === selectedPaper) return "rgb(220,0,0,1)";
+    if (node.id === hoverNodeID) return "rgb(0,0,139,1)"
     if (selectedPapersNeighbors.has(node.id)) return "rgb(255,204,0,1)" 
     if (!node.extracted) return "rgb(128, 128, 128)"
+    return "rgba(0,255,255,0.6)";
 
-    switch (node.id) {
-      case hoverNodeID:
-        return "rgb(0,0,139,1)";
-      case selectedPaper:
-        return "rgb(220,0,0,1)";
-      default:
-        return "rgba(0,255,255,0.6)";
-    }
   };
 
 

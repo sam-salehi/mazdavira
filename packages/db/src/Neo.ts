@@ -302,7 +302,7 @@ export default class NeoAccessor {
         // probably not required. 
     }
 
-    public static async pushExtraction(paper: FullPaper, references: VacuousPaper[],callback?:(id:string)=>void): Promise<void> {
+    public static async pushExtraction(paper: FullPaper, references: VacuousPaper[],callback?:(id:string[])=>void): Promise<void> {
         // NOTE: only references that have survived the api fetch process are available here
         let paperID:number;
         if (await NeoAccessor.paperExists(paper.arxiv)) {
@@ -310,11 +310,11 @@ export default class NeoAccessor {
         } else {
             paperID = await NeoAccessor.createPaper(paper,callback)
         }
-        await Promise.allSettled(references.map(r => this.pushReference(paperID,r)))
+        await Promise.allSettled(references.map(r => this.pushReference(paperID,r,callback)))
     }
 
 
-    public static async createPaper(paper:GenericPaper,callback?:(id:string)=>void): Promise<number> {
+    public static async createPaper(paper:GenericPaper,callback?:(id:string[])=>void): Promise<number> {
         const session = driver.session()
         const QUERY =  `CREATE (p:${QueryHelper.generatePaperQuery(paper)})\nRETURN p`
         try {
@@ -322,7 +322,7 @@ export default class NeoAccessor {
                 QUERY,{...paper,created_at: getPushTime()}
             )
             const paperID: number = res.records[0]?.get("p").identity
-            if (callback) callback(paper.arxiv);
+            if (callback) callback([paper.arxiv]);
             return paperID
         } catch (error) {
             console.error("Issue creating paper")
@@ -331,11 +331,9 @@ export default class NeoAccessor {
             session.close()
         }
     }
-    public static async updatePaper(paper:FullPaper,callback?:(id:string)=>void): Promise<number> {
+    public static async updatePaper(paper:FullPaper,callback?:(id:string[])=>void): Promise<number> {
         // assuming that paper exists 
 
-        console.log("Updating paper")
-        console.log(paper)
         const session = driver.session()
         const QUERY = `
             MATCH (p:Paper {arxiv: $arxiv})
@@ -349,7 +347,7 @@ export default class NeoAccessor {
                 {arxiv:paper.arxiv,properties:paper}
             )
             const paperID: number = res.records[0]?.get("p").identity   
-            if (callback) callback(paper.arxiv);
+            if (callback) callback([paper.arxiv]);
             return paperID
         } catch (error) {
             console.error(`Issue updating paper with title: ${paper.title}`)
@@ -359,7 +357,7 @@ export default class NeoAccessor {
         }
     }
 
-    private static async pushReference(paperid: Number, reference: VacuousPaper,callback?: (arxiv:string)=>void): Promise<void> {
+    private static async pushReference(paperid: Number, reference: VacuousPaper,callback?: (arxiv:string[])=>void): Promise<void> {
         // connects the given refeerence to the paper with Neo4j identifier paperid. 
         // if such reference does't exist, it crates vaccuous node.
         // ** references only need to be Vacuous on extraction from another paper
@@ -375,7 +373,7 @@ export default class NeoAccessor {
                 QUERY,
                 {paperId: paperid, ...reference,created_at: getPushTime()}
             )
-            if (callback) callback(reference.arxiv)
+            if (callback) callback([reference.arxiv])
         } catch (error) {
             throw error
         } finally {
@@ -401,10 +399,7 @@ export default class NeoAccessor {
             session.close()
         }
     }
-
-
 }
-
 
 class QueryHelper {
 
@@ -452,7 +447,7 @@ class QueryHelper {
             {key: "extracted", value: true}  
         ];
 
-        if (createDateTime) properties.push({key:"created_at", value: getPushTime()})  // ! remove getPushTime from here
+        if (createDateTime) properties.push({key:"created_at", value: getPushTime()})  // FIXME: remove getPushTime from here
         return properties
     }
 

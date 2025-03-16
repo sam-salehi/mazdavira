@@ -6,7 +6,7 @@ import useWebSocket from 'react-use-websocket';
 
 const SOCKET_URL = "ws://localhost:8080"
 
-type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string} // ? move to config file
+type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string} // FIXME: move to config file
 
 interface GraphDataType {
     graphData: {nodes: Node[], links: Edge[]},
@@ -45,8 +45,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     useEffect(() => {
         if (lastMessage !== null) {
             const msg: SocketMessage = JSON.parse(lastMessage.data)
-            console.log("Given message")
-            console.log(msg)
             if (msg.type === "update-signal") {
                 setCanUpdate(true) // user could add new nodes it they want            
             } else if (msg.type === "extract-notice") {
@@ -100,29 +98,60 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                 newLinks.push({ source: id, target: arxiv });
             });
             // push new information onto graph
-            updateGraphData([node],newLinks)
+            updateNodeInGraphData(node,newLinks); 
         } else {
             console.error("Paper not found in database for ", arxiv);
         }
     }
 
+    const makeEdgeString = (source:string,target:string) =>  `${source}-${target}`
+    const makeUpdatedNodes = function(oldNodes: Node[], newNodes: Node[]): Node[]  {
+        // newNodes set and oldNodes updated
+        const existingNodes = new Map<string,Node>();
+        newNodes.forEach((n:Node) => existingNodes.set(n.id,n));
+        
+        oldNodes.forEach((n:Node) => {
+            existingNodes.set(n.id,n)
+        })
+        return Array.from(existingNodes.values())
+    }
+    const makeUpdatedEdges = function(oldLinks: Edge[], newLinks: Edge[]): Edge[] {
+        const existingLinkIds = new Set(oldLinks.map(link => makeEdgeString(link.source,link.target)));
+        const uniqueNewLinks = newLinks.filter(link => !existingLinkIds.has(makeEdgeString(link.source,link.target)));
+        return [...oldLinks,...uniqueNewLinks]
+    }
 
     function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
         // adds newNodes and newLinks to graphData without creating duplicates
         setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-            // TODO: change updating to consider old nodes yet updated as well.
 
-            // Check for duplicates in nodes
-            const existingNodes = new Set(nodes.map((node) => node.id))
-            const uniqueNewNodes = newNodes.filter(node => !existingNodes.has(node.id))
-
-            // Check for duplicates in links
-            const existingLinkIds = new Set(links.map(link => `${link.source}-${link.target}`));
-            const uniqueNewLinks = newLinks.filter(link => !existingLinkIds.has(`${link.source}-${link.target}`));
-
+            const aggregatedNodes = makeUpdatedNodes(nodes,newNodes)
+            const aggregatedLinks = makeUpdatedEdges(links,newLinks)
+            
             return {
-                nodes: [...nodes, ...uniqueNewNodes], 
-                links: [...links, ...uniqueNewLinks], 
+                nodes: [...aggregatedNodes], 
+                links: [...aggregatedLinks], 
+            };
+        });
+    }
+
+    function updateNodeInGraphData(newNode: Node, newLinks: Edge[]) {
+        // handle updating individual nodes seperately for memory efficiancy
+        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+
+            
+            const nodeIndex = nodes.findIndex((n:Node) => n.id === newNode.id)
+            if (nodeIndex === -1) {
+                nodes.push(newNode)
+            } else {
+                nodes[nodeIndex] = newNode
+            }
+
+            const aggregatedLinks = makeUpdatedEdges(links,newLinks)
+            
+            return {
+                nodes: [...nodes], 
+                links: [...aggregatedLinks], 
             };
         });
 

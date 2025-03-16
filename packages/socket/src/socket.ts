@@ -28,12 +28,13 @@ console.log("WebSocket server running on ws://localhost:8080");
 
 function handleMessage(message: Buffer,id:UUID) {
     const json: Message = JSON.parse(message.toString())
-    if (json.type === "bfs") callBFS(json.arxiv,json.depth,(arxiv:string) => onExtractionCallback(arxiv,id))
+    if (json.type === "bfs") callBFS(json.arxiv,json.depth,(arxivIDs:string[]) => onExtractionCallback(arxivIDs,id))
 }
 
-function onExtractionCallback(arxivID:string,id:UUID) {
+function onExtractionCallback(arxivIDs:string[],id:UUID) {
     const ws = connections.get(id)
-    ws.send(JSON.stringify({type:"extract-notice", arxiv: arxivID}))
+    console.log("Sending update out for", arxivIDs)
+    arxivIDs.forEach((id:string) => {ws.send(JSON.stringify({type:"extract-notice", arxiv: id}))})
     broadcastUpdate(id)
 }
 
@@ -42,7 +43,7 @@ function broadcastUpdate(callerID: UUID) {
     connections.forEach(function(ws,id) {if (id != callerID) ws.send(JSON.stringify({type:"update-signal"}))})
 }
 
-function callBFS(arxiv:string,depth:number, callback: (arxiv:string) => void) {
+function callBFS(arxiv:string,depth:number, callback: (arxivIDs:string[]) => void) {
     FetchPipeline.extractPaperWithDepth(arxiv,depth,callback)
 }
 
