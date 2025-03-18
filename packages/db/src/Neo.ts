@@ -333,6 +333,7 @@ export default class NeoAccessor {
             return paperID
         } catch (error) {
             console.error(`Issue updating paper with title: ${paper.title}`)
+            console.log(paper)
             throw error
         } finally {
             session.close()

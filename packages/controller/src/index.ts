@@ -31,6 +31,6 @@ import { Paper } from "@repo/db/convert";
 // const pdfLink = await fetchPaperPDFLink("1706.03762")
 // console.log(pdfLink)
 // console.log("Recieved pdf")
-FetchPipeline.extractPaperWithDepth("1706.03762",1)
+// FetchPipeline.extractPaperWithDepth("1706.03762",1)
 // const papers = await NeoAccessor.getReferencingIDs("1706.03762")
 // console.log(papers)

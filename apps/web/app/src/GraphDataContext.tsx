@@ -95,7 +95,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
             // push new information onto graph
             updateNodeInGraphData(node,newLinks); 
         } else {
-            console.error("Paper not found in database for ", arxiv);
+            throw Error(`Paper ${arxiv} was passed as callback without being saved in database.`)
         }
     }
 
@@ -111,27 +111,27 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         })
         return Array.from(existingNodes.values())
     }
-    const makeUpdatedEdges = function(oldLinks: Edge[], newLinks: Edge[]): Edge[] {
+    const makeUpdatedEdges = function(oldLinks: Edge[],oldNodes: Node[], newLinks: Edge[]): Edge[] {
+        // TODO for references to nodes that do not exist on the graph, add those nodes as well
+        const oldNodeIds = new Set(oldNodes.map((n) => n.id))
+
+        newLinks.forEach(link => {
+            // just pushing empty paper to see if it works.
+            if (!oldNodeIds.has(link.source)) pushNode(link.source)
+            else if (!oldNodeIds.has(link.target)) pushNode(link.target)
+        })
+
         const existingLinkIds = new Set(oldLinks.map(link => makeEdgeString(link.source,link.target)));
         const uniqueNewLinks = newLinks.filter(link => !existingLinkIds.has(makeEdgeString(link.source,link.target)));
         return [...oldLinks,...uniqueNewLinks]
     }
-
-    // const makeUpdatedEdges = function(oldLinks: Edge[], newLinks: Edge[], id: string| null): Edge[] {
-    //     // id is for the node which we're adding links for
-    //     // remove all oldLinks corresponding to id. append with new Links
-    //     // TODO tailor for both calling funcitons
-    //     const independantLinks = oldLinks.filter(link => (link.source !== id && link.target !== id))
-    //     return [...independantLinks,...newLinks]
-    // }
-
 
     function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
         // adds newNodes and newLinks to graphData without creating duplicates
         setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
 
             const aggregatedNodes = makeUpdatedNodes(nodes,newNodes)
-            const aggregatedLinks = makeUpdatedEdges(links,newLinks)
+            const aggregatedLinks = makeUpdatedEdges(links,aggregatedNodes,newLinks)
             
             return {
                 nodes: [...aggregatedNodes], 
@@ -142,16 +142,16 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
     function updateNodeInGraphData(newNode: Node, newLinks: Edge[]) {
         // handle updating individual nodes seperately for memory efficiancy
+        // * requires that nodes being linked to, to exist in graph
         console.log("Recieved new links: ", newLinks.length)
-
         setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
             const nodeIndex = nodes.findIndex((n:Node) => n.id === newNode.id)
             if (nodeIndex === -1) {
                 nodes.push(newNode)
-            } else {
+            } else {// update node if exists
                 nodes[nodeIndex] = newNode
             }
-            const aggregatedLinks = makeUpdatedEdges(links,newLinks)
+            const aggregatedLinks = makeUpdatedEdges(links,nodes,newLinks)
 
             return {
                 nodes: [...nodes], 
@@ -159,6 +159,23 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
             };
         });
     }
+
+    async function pushNode(arxiv:string) {
+        // fetches node alone from db and adds it to graph
+        console.log("Pushing node: ", arxiv)
+        const paper = await NeoAccessor.getPaper(arxiv)
+        if (paper) {
+            const node = parsePaperForGraph(paper as FullPaper)
+            setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+                if (!nodes.find(n => n.id === node.id)) nodes.push(node)
+                return {
+                    nodes,
+                    links
+                }
+            })
+        }
+    }
+
       const value = {
         graphData,
         setGraphData,

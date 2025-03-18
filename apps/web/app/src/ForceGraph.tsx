@@ -31,7 +31,7 @@ export default function ForceGraph({
     // pulls neighbours of selectedPaper from backend's id from backend
     // they are in turn used to color edges
     const getNeighbours = async function(arxiv:string) {
-
+      console.log("Adding neighbors")
       const neighbors: GenericPaper[] = await NeoAccessor.getReferences(arxiv)
       const neighborIDs: string[] = neighbors.map(n => n.arxiv)
       setSelectedPapersNeighbors(new Set(neighborIDs))
@@ -39,7 +39,7 @@ export default function ForceGraph({
 
     getNeighbours(selectedPaper)
 
-  },[selectedPaper])
+  },[selectedPaper,graphData]) // todo make effect get called when adding nodes to graph on call bfs. e.g pass graphData
 
 
   const zoomOntoNode = function (node: any) {
