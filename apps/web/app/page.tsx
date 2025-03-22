@@ -44,7 +44,6 @@ export default function Home() {
 
   return (
     <div className="bg-black h-full">
-      {/* <span className='text-4xl text-red-500'> This is some text</span> */}
       <GraphDataProvider>
       <SidebarProvider>
       <ForceGraph

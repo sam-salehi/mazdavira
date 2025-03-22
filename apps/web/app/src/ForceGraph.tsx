@@ -3,6 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import NeoAccessor, {type GenericPaper } from "@repo/db/neo";
 import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
+import ExtractionDisplay from "@/components/display/ExtractionDisplay";
+
+// FIXME: move to display folder
 
 export default function ForceGraph({
   chosenPapers,
@@ -21,7 +24,7 @@ export default function ForceGraph({
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-  const {graphData} =  useGraphDataContext();
+  const {graphData,fetchingNodesCount} =  useGraphDataContext();
   console.log(graphData)
   
   const graphRef = useRef()
@@ -109,7 +112,8 @@ export default function ForceGraph({
 
   };
   return (
-    <div className="">
+    <div className="relative">
+      <ExtractionDisplay count={fetchingNodesCount}/>
       {graphData && (
         <ForceGraph3D
           ref = {graphRef}
@@ -127,3 +131,5 @@ export default function ForceGraph({
     </div>
   );
 }
+
+

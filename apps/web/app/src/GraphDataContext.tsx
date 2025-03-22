@@ -1,18 +1,20 @@
 import { createContext, ReactNode,useContext,useEffect,useState } from "react";
 import NeoAccessor, {type Edge,type Node, type FullPaper, GenericPaper } from "@repo/db/neo";
 import useWebSocket from 'react-use-websocket';
+import { unique } from "next/dist/build/utils";
 
 // Context provider for nodes passed onto the graph.
 
 const SOCKET_URL = "ws://localhost:8080"
 
-type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string} // FIXME: move to config file
+type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string, extracting_nodes:number} | {type:"extract-count-update",net_extractions:number} // FIXME: move to config file
 
 interface GraphDataType {
     graphData: {nodes: Node[], links: Edge[]},
     setGraphData: () => void;
     callBFS: (id:string,depth:number) => void,
     updateLastFetch: ()=>void,
+    fetchingNodesCount: number
 }
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
@@ -35,7 +37,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
       }, [])
 
     // const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
-
+    
+    const [fetchingNodesCount,setFetchingNodesCount] =  useState<number>(0);
     
     // * sendMessage sends message to 
     const {sendMessage, lastMessage, readyState} = useWebSocket(SOCKET_URL)
@@ -47,11 +50,13 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                 setCanUpdate(true) // user could add new nodes it they want            
             } else if (msg.type === "extract-notice") {
                 addBFSNode(msg.arxiv)
+            } else if (msg.type === "extract-count-update") {
+                console.log("changing counts by", msg.net_extractions)
+                setFetchingNodesCount(count => count + msg.net_extractions)
             } else {
                 throw new Error("Invalid message recieved from scoket: ")
             }
     }},[readyState,lastMessage,readyState])
-
 
 
     // * canUpdate determines wether new data could be displayed since last fetch
@@ -93,7 +98,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                 newLinks.push({ source: id, target: arxiv });
             });
             // push new information onto graph
-            updateNodeInGraphData(node,newLinks); 
+            updateGraphData([node],newLinks); 
         } else {
             throw Error(`Paper ${arxiv} was passed as callback without being saved in database.`)
         }
@@ -101,86 +106,69 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
     const makeEdgeString = (source:string,target:string) =>  `${source}-${target}`
 
-    const makeUpdatedNodes = function(oldNodes: Node[], newNodes: Node[]): Node[]  {
-        // newNodes set and oldNodes updated
-        const existingNodes = new Map<string,Node>();
-        newNodes.forEach((n:Node) => existingNodes.set(n.id,n));
-        
-        oldNodes.forEach((n:Node) => {
-            existingNodes.set(n.id,n)
-        })
-        return Array.from(existingNodes.values())
-    }
-    const makeUpdatedEdges = function(oldLinks: Edge[],oldNodes: Node[], newLinks: Edge[]): Edge[] {
-        // TODO for references to nodes that do not exist on the graph, add those nodes as well
-        const oldNodeIds = new Set(oldNodes.map((n) => n.id))
 
-        newLinks.forEach(link => {
-            // just pushing empty paper to see if it works.
-            if (!oldNodeIds.has(link.source)) pushNode(link.source)
-            else if (!oldNodeIds.has(link.target)) pushNode(link.target)
-        })
-
-        const existingLinkIds = new Set(oldLinks.map(link => makeEdgeString(link.source,link.target)));
-        const uniqueNewLinks = newLinks.filter(link => !existingLinkIds.has(makeEdgeString(link.source,link.target)));
-        return [...oldLinks,...uniqueNewLinks]
-    }
-
-    function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
-        // adds newNodes and newLinks to graphData without creating duplicates
-        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-
-            const aggregatedNodes = makeUpdatedNodes(nodes,newNodes)
-            const aggregatedLinks = makeUpdatedEdges(links,aggregatedNodes,newLinks)
-            
-            return {
-                nodes: [...aggregatedNodes], 
-                links: [...aggregatedLinks], 
-            };
-        });
-    }
-
-    function updateNodeInGraphData(newNode: Node, newLinks: Edge[]) {
-        // handle updating individual nodes seperately for memory efficiancy
-        // * requires that nodes being linked to, to exist in graph
-        console.log("Recieved new links: ", newLinks.length)
-        setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-            const nodeIndex = nodes.findIndex((n:Node) => n.id === newNode.id)
-            if (nodeIndex === -1) {
-                nodes.push(newNode)
-            } else {// update node if exists
-                nodes[nodeIndex] = newNode
-            }
-            const aggregatedLinks = makeUpdatedEdges(links,nodes,newLinks)
-
-            return {
-                nodes: [...nodes], 
-                links: [...aggregatedLinks], 
-            };
-        });
-    }
-
-    async function pushNode(arxiv:string) {
-        // fetches node alone from db and adds it to graph
-        console.log("Pushing node: ", arxiv)
-        const paper = await NeoAccessor.getPaper(arxiv)
-        if (paper) {
-            const node = parsePaperForGraph(paper as FullPaper)
+    function updateNodesData(newNodes: Node[]) {
+        // adds unique new nodes and updates old nodes in graphData
+        // in two strategies for memory efficiency.
+        if (newNodes.length > 5) {
             setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
-                if (!nodes.find(n => n.id === node.id)) nodes.push(node)
+                const existingNodes = new Map<string,Node>();
+                nodes.forEach((n:Node) => {
+                    existingNodes.set(n.id,n)
+                    })
+                newNodes.forEach((n:Node) => existingNodes.set(n.id,n))
                 return {
-                    nodes,
+                    nodes:Array.from(existingNodes.values()),
                     links
                 }
             })
+        } else {
+            setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+                for (const newNode of newNodes) {
+                    const nodeIndex = nodes.findIndex((n:Node) => n.id === newNode.id)
+                    if (nodeIndex === -1) {
+                        nodes.push(newNode)
+                    } else {// update node if exists
+                        nodes[nodeIndex] = newNode
+                    }
+                }
+                return {
+                    nodes: [...nodes], 
+                    links: [...links], 
+                };
+
+            })
         }
     }
+
+    function updateEdgesData(newLinks:Edge[]) {
+      setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
+            const existingNodeIDs = new Set(nodes.map((n) => n.id));
+            const existingLinkIDs = new Set(links.map((link) => makeEdgeString(link.source,link.target)))
+
+            const linkFilter = (link: Edge) => (
+                !existingLinkIDs.has(makeEdgeString(link.source,link.target)) &&
+                existingNodeIDs.has(link.source) &&
+                existingNodeIDs.has(link.target)
+            )
+            const uniqueNewLinks = newLinks.filter(l => linkFilter(l))
+            return {nodes:nodes,links:[...links,...uniqueNewLinks]}
+        })
+
+    }
+
+
+ function updateGraphData(newNodes: Node[], newLinks: Edge[]) {
+    updateNodesData(newNodes)
+    updateEdgesData(newLinks)
+ }
 
       const value = {
         graphData,
         setGraphData,
         callBFS,
-        updateLastFetch
+        updateLastFetch,
+        fetchingNodesCount
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }

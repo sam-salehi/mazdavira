@@ -12,23 +12,31 @@ const LLMSemaphore = new Semaphore(3)
 
 export default class FetchPipeline {
 
-    public static async extractPaperWithDepth(arxivID:string | null, depth: number, callback?: (id:string[])=>void) {
+    public static async extractPaperWithDepth(arxivID:string, depth: number, paper_extracted_callback?: (id:string[])=>void, extraction_count_callback?: (delta: number) => void) {
         // recursive tree, bfs on a paper and its references
         // REQUIRES: depth >= 0,  
         // arxivID is the id for the root )
-        // callback is to be called after a paper or reference is added to DB.
+        // paper_extracted_callback is to be called after a paper or reference is added to DB.
         // This is used to tell server to send a message to front end saying it can display new nodes.
-        if (!arxivID || depth === 0) return
-        console.log("Searching with depth ", depth)
+        if (depth === 0) return
         if (depth < 0) throw new RangeError(`Expect depth to be non-negative, got ${depth}`)
-        const extractedPapers: GenericPaper[] = await this.extractPaper(arxivID,callback)
-        extractedPapers.forEach((paper:GenericPaper) =>this.extractPaperWithDepth(paper.arxiv,depth-1,callback)) // async
+        let extractedPapers: GenericPaper[] = []
+
+        if (extraction_count_callback) {
+            extraction_count_callback(1);
+            extractedPapers = await this.extractPaper(arxivID,paper_extracted_callback)
+            extraction_count_callback(-1);
+        } else {
+            extractedPapers= await this.extractPaper(arxivID,paper_extracted_callback)
+        }
+
+        extractedPapers.forEach((paper:GenericPaper) =>this.extractPaperWithDepth(paper.arxiv,depth-1,paper_extracted_callback,extraction_count_callback)) // async
     }
 
 
-    public static async extractPaper(arxivID: string,callback?:(id:string[])=>void): Promise<GenericPaper[]> {
+    public static async extractPaper(arxivID: string,paper_extracted_callback?:(id:string[])=>void): Promise<GenericPaper[]> {
         // get llm to extract information about paper
-        // callback defined in extractPaperWithDepth
+        // paper_extracted_callback defined in extractPaperWithDepth
         if (!arxivID) return [];
         const link = await fetchPaperPDFLink(arxivID)
         if (!link) return []
@@ -39,7 +47,7 @@ export default class FetchPipeline {
             return await NeoAccessor.getReferences(arxivID)
         }
 
-        await LLMSemaphore.acquire();
+        // await LLMSemaphore.acquire(); FIXME: bring back sempahores
         let info: paperInfo | undefined = undefined;
 
         // timeout for exhaustion errors and try again after 5 seconds.
@@ -55,11 +63,8 @@ export default class FetchPipeline {
         }
         info.arxiv = arxivID // just passing arxiv for safety
         const [srcPaper, referencedPapers]= await this.castToPapers(info)
-        LLMSemaphore.release();
-
-        console.log("outside")
-        console.log(srcPaper)
-        NeoAccessor.pushExtraction(srcPaper,referencedPapers,callback) // async 
+        // LLMSemaphore.release();
+        NeoAccessor.pushExtraction(srcPaper,referencedPapers,paper_extracted_callback) // async 
         return referencedPapers
     }
 
