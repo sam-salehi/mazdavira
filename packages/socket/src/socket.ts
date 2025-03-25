@@ -1,13 +1,14 @@
 import { WebSocketServer,WebSocket } from "ws";
 import { v4 } from "uuid";
 import FetchPipeline from "@repo/controller/src/FetchPipeline.js"
-import { number } from "zod";
+import { SocketMessage, PORT } from "./config";
+
+const wss = new WebSocketServer({ port: PORT });
+
+const connections: Map<UUID,WebSocket> = new Map(); // maintains websocket connections to be called to.
+const extraction_counts: Map<UUID,number> = new Map(); // maintains extraction_counts
 
 
-
-const wss = new WebSocketServer({ port: 8080 });
-
-let connections: Map<string,WebSocket> = new Map()
 
 type Message = {type:"bfs",arxiv:string,depth:number}
 type UUID = string
@@ -26,18 +27,27 @@ wss.on("connection", (ws: WebSocket,request) => {
 
 console.log("WebSocket server running on ws://localhost:8080");
 
+
+
+// request handlers
+
 function handleMessage(message: Buffer,id:UUID) {
     const json: Message = JSON.parse(message.toString())
-    if (json.type === "bfs")  {
-        FetchPipeline.extractPaperWithDepth(
-            json.arxiv,
-            json.depth,
-            (arxivIDs:string[]) => onExtractionCallback(arxivIDs,id),
-            (delta:number) => updateExtractionCountCallback(delta,id),
+    if (json.type === "bfs")  handleBFSRequest(json.arxiv,json.depth,id)
+}   
+
+
+function handleBFSRequest(arxiv:string,depth:number,id:UUID) {
+    if (!extraction_counts.has(id)) extraction_counts.set(id,0)
+    FetchPipeline.extractPaperWithDepth(
+        arxiv,
+        depth,
+        (arxivIDs:string[]) => onExtractionCallback(arxivIDs,id),
+        (delta:number) => updateExtractionCountCallback(delta,id),
     )
 }
-    
-}   
+
+// callbacks
 
 function onExtractionCallback(arxivIDs:string[],id:UUID) {
     // signals to client that given nodes have been updated and should be refresshed.
@@ -50,22 +60,22 @@ function onExtractionCallback(arxivIDs:string[],id:UUID) {
 function updateExtractionCountCallback(delta:number, id:UUID) {
     // sends net change of calls made in client.
     const ws = connections.get(id)  
+    const new_count = extraction_counts.get(id) + delta
+    extraction_counts.set(id,new_count) 
     console.log("Updating extraction count by ", delta)
-    ws.send(JSON.stringify({type:"extract-count-update",net_extractions:delta}))
-
+    ws.send(JSON.stringify({type:"extract-count-update",extraction_count:new_count} as SocketMessage))
 }
 
+
+// server side handling.
 
 function broadcastUpdate(callerID: UUID) {
     // broadcast new nodes to be rendered to all users except the caller of BFS with callerID
     connections.forEach(function(ws,id) {if (id != callerID) ws.send(JSON.stringify({type:"update-signal"}))})
 }
 
-// function callBFS(arxiv:string,depth:number, callback: (arxivIDs:string[]) => void) {
-//     FetchPipeline.extractPaperWithDepth(arxiv,depth,callback)
-// }
-
 function handleClose(id: string) {
     connections.delete(id)
+    extraction_counts.delete(id)
     console.log("Closed connection with ", id)
 }

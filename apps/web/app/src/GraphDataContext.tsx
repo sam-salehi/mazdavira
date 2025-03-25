@@ -1,20 +1,19 @@
 import { createContext, ReactNode,useContext,useEffect,useState } from "react";
-import NeoAccessor, {type Edge,type Node, type FullPaper, GenericPaper } from "@repo/db/neo";
+import NeoAccessor from "@repo/db/neo";
+import  {type Edge,type Node, type FullPaper, GenericPaper } from "@repo/db/convert"
+import {SOCKET_URL, type SocketMessage} from "@repo/socket/src/config"
 import useWebSocket from 'react-use-websocket';
-import { unique } from "next/dist/build/utils";
-
 // Context provider for nodes passed onto the graph.
 
-const SOCKET_URL = "ws://localhost:8080"
-
-type SocketMessage = {type:"update-signal"} | {type:'extract-notice', arxiv:string, extracting_nodes:number} | {type:"extract-count-update",net_extractions:number} // FIXME: move to config file
+export type SocketStatus = "connecting" | "connected" | "closed"
 
 interface GraphDataType {
     graphData: {nodes: Node[], links: Edge[]},
     setGraphData: () => void;
     callBFS: (id:string,depth:number) => void,
     updateLastFetch: ()=>void,
-    fetchingNodesCount: number
+    fetchingNodesCount: number,
+    socketStatus: SocketStatus
 }
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
@@ -43,6 +42,11 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     // * sendMessage sends message to 
     const {sendMessage, lastMessage, readyState} = useWebSocket(SOCKET_URL)
 
+    console.log("Ready State")
+    console.log(readyState)
+
+
+
     useEffect(() => {
         if (lastMessage !== null) {
             const msg: SocketMessage = JSON.parse(lastMessage.data)
@@ -51,12 +55,11 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
             } else if (msg.type === "extract-notice") {
                 addBFSNode(msg.arxiv)
             } else if (msg.type === "extract-count-update") {
-                console.log("changing counts by", msg.net_extractions)
-                setFetchingNodesCount(count => count + msg.net_extractions)
+                setFetchingNodesCount(msg.extraction_count)
             } else {
                 throw new Error("Invalid message recieved from scoket: ")
             }
-    }},[readyState,lastMessage,readyState])
+    }},[readyState,lastMessage])
 
 
     // * canUpdate determines wether new data could be displayed since last fetch
@@ -163,12 +166,17 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     updateEdgesData(newLinks)
  }
 
+
+    const readyStates: SocketStatus[] = ["connecting","connected","closed","closed"]
+
+
       const value = {
         graphData,
         setGraphData,
         callBFS,
         updateLastFetch,
-        fetchingNodesCount
+        fetchingNodesCount,
+        socketStatus:readyStates[readyState],
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }

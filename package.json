@@ -43,7 +43,7 @@
     "marked": "^15.0.7",
     "neo4j-driver": "^5.27.0",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^4.10.38",
+    "pdfjs-dist": "^5.0.375",
     "react-force-graph-3d": "^1.26.0",
     "react-loader-spinner": "^6.1.6",
     "react-markdown": "^10.0.0",

@@ -2,7 +2,8 @@ import {type paperInfo, type reference} from "@repo/model/src/config.js"
 import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
-import NeoAccessor, {FullPaper, GenericPaper, VacuousPaper,makeVacuousPaper} from "@repo/db/neo"
+import NeoAccessor from "@repo/db/neo"
+import {FullPaper, GenericPaper, VacuousPaper,makeVacuousPaper} from "@repo/db/convert"
 import Semaphore from "./semaphore.js"
 
 
@@ -47,7 +48,7 @@ export default class FetchPipeline {
             return await NeoAccessor.getReferences(arxivID)
         }
 
-        // await LLMSemaphore.acquire(); FIXME: bring back sempahores
+        // await LLMSemaphore.acquire(); // TODO
         let info: paperInfo | undefined = undefined;
 
         // timeout for exhaustion errors and try again after 5 seconds.

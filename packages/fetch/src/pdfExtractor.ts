@@ -19,13 +19,13 @@ export class PaperExtractor {
 
     public static async fetchPDF(url: string): Promise<string> {
         // loads pdf in from url
+        // TODO add proxy here as well.
         let result: string = ""
         try {
             const response = await fetch(url);
             const data = await response.blob();
             const loader = new WebPDFLoader(data);
             const docs = await loader.load();
-    
             docs.map(page => result += page.pageContent)
             return result
         } catch (error) {

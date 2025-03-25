@@ -1,63 +1,7 @@
 import { QueryConfig, ResultSummary, session } from "neo4j-driver";
 import driver from "../../db/src/config.js";
 import { string } from "zod";
-
-// const PAPER_QUERY = "Paper {title:$title, authors:$authors,institutions:$institutions, pub_year:$pub_year, arxiv:$arxiv, doi:$doi, referencing_count:$referencing_count, referenced_count:$referenced_count, pdf_link: $pdf_link}"
-// Papers which are not extracted.
-
-export interface GenericPaper {
-    title: string,
-    arxiv: string,
-    extracted: boolean
-    pdf_link: string,
-    authors: string[]
-    institutions: string[],
-    pub_year: number,
-    referencing_count: number,
-    referenced_count: number,
-}
-
-// Representing papers that have not been extracted by llm or for just passing basic information around.
-export interface VacuousPaper extends GenericPaper {
-    authors: []
-    institutions: []
-    pub_year: 0
-    referencing_count: 0,
-    referenced_count: 0,
-    extracted: false
-}
-
-// Papers that have been extracted 
-export interface FullPaper extends GenericPaper {
-    extracted: true
-}
-
-export const isFullPaper = function(p: GenericPaper):boolean {
-    return p.extracted
-  }
-
-export const makeVacuousPaper = function(title:string,arxiv:string,pdf_link:string): VacuousPaper {
-    return {
-        title: title,
-        arxiv: arxiv,
-        pdf_link: pdf_link,
-        extracted: false
-    } as VacuousPaper
-}
-
-
-
-export type Node = { // used for presenting nodes and edges on Graph visualization.
-    id: string; // arxiv id
-    title: string;
-    refCount: number;
-    extracted: boolean // for displaying in dimmer color
-}
-
-export type Edge = {
-    source: string,
-    target: string
-}
+import { GenericPaper, VacuousPaper, FullPaper, isFullPaper, makeVacuousPaper,Node, Edge} from "./convert.js";
 
 function getPushTime() {
     // used to set Paper.created_at property
@@ -85,13 +29,14 @@ export default class NeoAccessor {
         }
     }
 
-    private static async getNodes(creation_time?:string): Promise<Node[]> {
-        //returns array of all nodes 
+    public static async getNodes(creation_time?:string): Promise<Node[]> {
+        //returns array of all nodes.
+        // does so for nodes after creation_time, if creation_time has been provided.
 
         const QUERY = `
             MATCH (p:Paper)
             ${creation_time ? `WHERE p.created_at > $creation_time` : ""}
-            RETURN p.title as title, p.arxiv as arxiv, p.referenced_count as refCount, p.extracted as extracted
+            RETURN p.title as title, p.arxiv as arxiv, COUNT{()-[:REFERENCED]->(p)} as refCount, p.extracted as extracted
             `
 
         let nodes: Node[] = [];
@@ -103,14 +48,14 @@ export default class NeoAccessor {
             } else {
                 result = await session.run(QUERY)
             }
-            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount:rec._fields[2], extracted: rec._fields[3]}))
+            
+            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount: rec._fields[2], extracted: rec._fields[3]}))
         } catch (error) {
             console.error("There was an issue fetching all nodes", error)
             throw error
         }
         return nodes
     }
-
 
     private static async getEdges(creation_time?:string): Promise<Edge[]> {
         const QUERY = `
@@ -179,27 +124,6 @@ export default class NeoAccessor {
         } finally {
             session.close()
             return nodePaper || null
-        }
-    }
-
-    public static async getPaperPDFLink(title:string): Promise<string>  {
-        // ! remove
-        const QUERY = `
-            MATCH (p:Paper {title: $title})
-            RETURN p.pdf_link
-            LIMIT 1
-            `
- 
-        const session = driver.session()
-        let pdfLink: string = "";
-        try {
-            const result = await session.run(QUERY, { title: title });
-            pdfLink = result.records[0]?.get('p.pdf_link') || ""; 
-        } catch (error) {
-            console.error(`Issue fetching PDF link for paper ${title}: `, error);
-        } finally {
-            session.close();
-            return pdfLink;
         }
     }
 

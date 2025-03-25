@@ -1,18 +1,52 @@
-import {type paperInfo, type reference} from "@repo/model/src/config.js"
-import {fetchPaperPDFLink, getReferencedCount} from "@repo/fetch/src/urlFetcher.js" // TODO: extra fetches should be handled outside
 
-export type Paper = {
+export interface GenericPaper {
     title: string,
-    authors: string[],
+    arxiv: string,
+    extracted: boolean
+    pdf_link: string,
+    authors: string[]
     institutions: string[],
     pub_year: number,
-    arxiv: string,
-    doi: string | null,
-    referencing_count: number | null,
-    referenced_count: number | null,
-    pdf_link: string | null
-
+    referencing_count: number,
+    referenced_count: number,
 }
 
+// Representing papers that have not been extracted by llm or for just passing basic information around.
+export interface VacuousPaper extends GenericPaper {
+    authors: []
+    institutions: []
+    pub_year: 0
+    referencing_count: 0,
+    referenced_count: 0,
+    extracted: false
+}
 
+// Papers that have been extracted 
+export interface FullPaper extends GenericPaper {
+    extracted: true
+}
 
+export const isFullPaper = function(p: GenericPaper):boolean {
+    return p.extracted
+  }
+
+export const makeVacuousPaper = function(title:string,arxiv:string,pdf_link:string): VacuousPaper {
+    return {
+        title: title,
+        arxiv: arxiv,
+        pdf_link: pdf_link,
+        extracted: false
+    } as VacuousPaper
+}
+
+export type Node = { // used for presenting nodes and edges on Graph visualization.
+    id: string; // arxiv id
+    title: string;
+    refCount: number;
+    extracted: boolean // for displaying in dimmer color
+}
+
+export type Edge = {
+    source: string,
+    target: string
+}

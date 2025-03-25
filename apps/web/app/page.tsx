@@ -6,8 +6,7 @@ import SidebarButton from "@/components/ui/SideBarButton";
 import { ChatHistoryProvider } from "./src/ChatContext";
 import { SidebarProvider } from "./src/SideBarContext";
 import { GraphDataProvider } from "./src/GraphDataContext";
-import { GenericPaper, FullPaper } from "@repo/db/neo";
-import { isFullPaper } from "@repo/db/neo";
+import { GenericPaper, FullPaper, isFullPaper } from "@repo/db/convert";
 
 export type chosenPaper = {
   title: string;
@@ -19,7 +18,7 @@ export type chosenPaper = {
 };
 
 export const makeChosenPaper = function(gp: GenericPaper): chosenPaper {
-  // conversts GenericPaper to chosenPaper for UI display handling difference between Paper and VaccuosusPaper.
+  // conversts GenericPaper to chosenPaper for UI display handling difference between Paper and VaccuousPaper.
   const result: chosenPaper = {
     title:gp.title,
     year: 0,

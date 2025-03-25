@@ -1,9 +1,12 @@
-import ForceGraph3D from "react-force-graph-3d";
+import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
-import NeoAccessor, {type GenericPaper } from "@repo/db/neo";
+import NeoAccessor from "@repo/db/neo";
+import {type Node} from "@repo/db/convert"
+import {type GenericPaper } from "@repo/db/convert"
 import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
 import ExtractionDisplay from "@/components/display/ExtractionDisplay";
+
 
 // FIXME: move to display folder
 
@@ -24,10 +27,9 @@ export default function ForceGraph({
   const [hoverNodeID, setHoverNodeID] = useState<string>("");
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
   
-  const {graphData,fetchingNodesCount} =  useGraphDataContext();
-  console.log(graphData)
+  const {graphData} =  useGraphDataContext();
   
-  const graphRef = useRef()
+  const graphRef = useRef<ForceGraphMethods|null>(null)
   
 
   useEffect(() => { 
@@ -42,7 +44,21 @@ export default function ForceGraph({
 
     getNeighbours(selectedPaper)
 
-  },[selectedPaper,graphData]) // todo make effect get called when adding nodes to graph on call bfs. e.g pass graphData
+  },[selectedPaper,graphData]) 
+
+
+  useEffect(() => {
+    if (graphRef.current) {
+      const linkForce = graphRef.current.d3Force("link");
+      if (linkForce) {
+        linkForce.distance(100); // TODO configure
+        graphRef.current.refresh(); 
+      }
+    }
+  }, [graphData])
+
+
+
 
 
   const zoomOntoNode = function (node: any) {
@@ -62,7 +78,7 @@ export default function ForceGraph({
   };
 
   const handleNodeHover = async function (node: any) {
-    if (!node || hoverNodeID === node) return;
+    if (!node || hoverNodeID === node.id) return;
     setHoverNodeID(node.id || null);
   };
 
@@ -82,7 +98,7 @@ export default function ForceGraph({
     }
   };
 
-  const handleEdgeClick = async function ({ source, target }) {
+  const handleEdgeClick = async function ({ source, target }:{source:any,target:any}) {
     if (
       chosenPapers.find(
         (paper) => paper.arxiv === source.id || paper.arxiv === target.id,
@@ -111,9 +127,14 @@ export default function ForceGraph({
     return "rgba(0,255,255,0.6)";
 
   };
+
+  const setNodeSize = function (node): number {
+    return Math.trunc(5 * 20 ** (Math.min(100,node.refCount)/100))
+  }
+
   return (
     <div className="relative">
-      <ExtractionDisplay count={fetchingNodesCount}/>
+      <ExtractionDisplay/>
       {graphData && (
         <ForceGraph3D
           ref = {graphRef}
@@ -124,8 +145,8 @@ export default function ForceGraph({
           onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
           onLinkClick={handleEdgeClick}
-          nodeLabel={(node) => node.title}
-          enableNodeDrag={false}
+          nodeLabel={(node) => `${node.refCount}-${setNodeSize(node)}`}
+          nodeVal={setNodeSize}
         />
       )}
     </div>

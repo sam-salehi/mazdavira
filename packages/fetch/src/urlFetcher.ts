@@ -15,7 +15,9 @@ export async function fetchPaperPDFLink(arxiv: string): Promise<string|null>{
 
 
 export async function  getReferencedCount(arxiv:string): Promise<number | null> {
-  return 0 // FIXME:
+  // TODO remove all dependancies
+  return 0
+
   const referenceCount: number = await ArxivAPI.getReferencedCount(arxiv)
   return referenceCount
 }
@@ -76,16 +78,35 @@ class ArxivAPI {
       }
     }  
 
-  public static async getReferencedCount(arxivID: string): Promise<number> {
-    try {
-        const title = await this.fetchArxivTitle(arxivID);
-        const citations = await this.fetchCitationsFromScholar(title);
-        return citations;
-    } catch (error) {
-        console.error(`Error fetching referenced count for ${arxivID}:`, error);
-        throw error;
+  // public static async getReferencedCount(arxivID: string): Promise<number> {
+  //   try {
+  //       const title = await this.fetchArxivTitle(arxivID);
+  //       const citations = await this.fetchCitationsFromScholar(title);
+  //       return citations;
+  //   } catch (error) {
+  //       console.error(`Error fetching referenced count for ${arxivID}:`, error);
+  //       throw error;
+  //   }
+  // }
+
+
+    public static async getReferencedCount(arxivID:string): Promise<number> {
+
+    // try {
+    //   const response = await axios.get("https://opencitations.net/index/api/v1/citations/10.48550/arXiv.2301.00001",
+    //     {headers:{"authorization":"39da254f-2609-4125-8aa5-c522558622c4 "}} // FIXME: move to env
+    //   )
+    //   console.log(Object.keys(response))
+    //   console.log(response.data.length)
+    //   console.log(response.data[0])
+    //   return 0
+    // } catch (error) {
+    //   console.error("Issue fetching referecnes Count from openCitations")
+    //   throw error
+    // }
+    return 0
     }
-  }
+
 
   private static async fetchArxivTitle(arxivID: string): Promise<string> {
     const arxivResponse = await axios.get(`http://export.arxiv.org/api/query?id_list=${arxivID}`);
