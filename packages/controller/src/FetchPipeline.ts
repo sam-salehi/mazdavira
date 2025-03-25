@@ -1,5 +1,5 @@
 import {type paperInfo, type reference} from "@repo/model/src/config.js"
-import {fetchPaperPDFLink, getReferencedCount, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
+import {fetchPaperPDFLink, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
 import NeoAccessor from "@repo/db/neo"
@@ -86,23 +86,18 @@ export default class FetchPipeline {
     private static async fetchPaperDetails(p: paperInfo): Promise<FullPaper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
         // don't extract information about paper if already in db. Just take it out
-        const [refCountResult, pdfSourceLinkResult] = await Promise.allSettled([ 
-            getReferencedCount(p.arxiv),
+        const [pdfSourceLinkResult] = await Promise.allSettled([
             fetchPaperPDFLink(p.arxiv),
-            !p.arxiv? fetchArxivID(p.title): p.arxiv
         ]);
 
-        const refCount: number | null = refCountResult.status === 'fulfilled' ? refCountResult.value : null;
         const pdfSourceLink: string | null = pdfSourceLinkResult.status === 'fulfilled' ? pdfSourceLinkResult.value : null;
-        // ! remove ||'s
         return {
             title: p.title,
             authors: p.authors,
-            institutions: p.institutions || [],
+            institutions: p.institutions,
             pub_year: p.pub_year,
-            arxiv: p.arxiv || "",
+            arxiv: p.arxiv ,
             referencing_count: p.referencing_count,
-            referenced_count: refCount || 0,
             pdf_link: pdfSourceLink || "",
             extracted: true
         };

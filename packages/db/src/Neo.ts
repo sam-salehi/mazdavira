@@ -353,7 +353,6 @@ class QueryHelper {
             { key: "pub_year", value: node.pub_year },
             { key: "arxiv", value: node.arxiv },
             { key: "referencing_count", value: node.referencing_count },
-            { key: "referenced_count", value: node.referenced_count },
             { key: "pdf_link", value: node.pdf_link }, 
             {key: "extracted", value: true}  
         ];
