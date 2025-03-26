@@ -42,11 +42,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     // * sendMessage sends message to 
     const {sendMessage, lastMessage, readyState} = useWebSocket(SOCKET_URL)
 
-    console.log("Ready State")
-    console.log(readyState)
-
-
-
     useEffect(() => {
         if (lastMessage !== null) {
             const msg: SocketMessage = JSON.parse(lastMessage.data)
@@ -87,10 +82,10 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     async function addBFSNode(arxiv: string) {
         // get nodes and edges associated to arxiv from graph.
         // fetch related information
-        const paper: GenericPaper | null = await NeoAccessor.getPaper(arxiv);
+        const {paper, refCount} : {paper: GenericPaper, refCount: number} = await NeoAccessor.getPaper(arxiv);
         if (paper) {
             const fp: FullPaper = paper as FullPaper
-            const node: Node = parsePaperForGraph(fp);
+            const node: Node = parsePaperForGraph(fp,refCount);
             const referencingIDs = await NeoAccessor.getReferencingIDs(arxiv); // those arxiv is referencing
             const referencedIDs = await NeoAccessor.getReferencedIDs(arxiv); // those arxiv is referenced by
             const newLinks: Edge[] = [];
@@ -167,7 +162,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
  }
 
 
-    const readyStates: SocketStatus[] = ["connecting","connected","closed","closed"]
+    const SocketStates: SocketStatus[] = ["connecting","connected","closed","closed"]
 
 
       const value = {
@@ -176,7 +171,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         callBFS,
         updateLastFetch,
         fetchingNodesCount,
-        socketStatus:readyStates[readyState],
+        socketStatus:SocketStates[readyState],
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }
@@ -189,7 +184,7 @@ export const useGraphDataContext = () => {
     return context
 }
 
-function parsePaperForGraph(paper: FullPaper): Node {
+function parsePaperForGraph(paper: FullPaper,refCount:number): Node {
     // used to turn type Paper fetched form db suitable for graph.
-    return {id: paper.arxiv, title: paper.title, refCount: paper.referenced_count || 0, extracted: paper.extracted}
+    return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted}
 }

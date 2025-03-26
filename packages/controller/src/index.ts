@@ -31,5 +31,10 @@ import NeoAccessor from "@repo/db/neo";
 
 // FetchPipeline.extractPaperWithDepth("1706.03762",1)
 
-// const nodes = await NeoAccessor.getNodes()
-// console.log(nodes)
+// const {node,refCount} = await NeoAccessor.getPaper("1411.4952")
+// console.log(refCount)
+
+
+// const data = await NeoAccessor.getEntireGraph()
+
+// console.log(data.nodes)

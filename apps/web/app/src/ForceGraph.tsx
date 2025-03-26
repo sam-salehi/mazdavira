@@ -1,7 +1,6 @@
 import ForceGraph3D, { ForceGraphMethods } from "react-force-graph-3d";
 import { useEffect, useState, useRef } from "react";
 import NeoAccessor from "@repo/db/neo";
-import {type Node} from "@repo/db/convert"
 import {type GenericPaper } from "@repo/db/convert"
 import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
@@ -57,10 +56,6 @@ export default function ForceGraph({
     }
   }, [graphData])
 
-
-
-
-
   const zoomOntoNode = function (node: any) {
     const distance = 40;
     const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
@@ -85,39 +80,39 @@ export default function ForceGraph({
   const handleNodeClick = async function (node: any) {
     zoomOntoNode(node);
     if (chosenPapers.find((paper) => paper.arxiv === node.id)) return;
-    const paper: GenericPaper | null = await NeoAccessor.getPaper(node.id);
-    console.log("Fetched paper")
-    console.log(paper)
-    if (paper) {
-      openSideBar();
-      setChosenPapers([
-        makeChosenPaper(paper),
-        ...chosenPapers,
-      ]);
-      setSelectedPaper(paper.arxiv);
-    }
+    const {paper}: {paper:GenericPaper} = await NeoAccessor.getPaper(node.id);
+    openSideBar();
+    addUniqueChosenPapers([paper])
+    setSelectedPaper(paper.arxiv);
   };
 
-  const handleEdgeClick = async function ({ source, target }:{source:any,target:any}) {
-    if (
-      chosenPapers.find(
-        (paper) => paper.arxiv === source.id || paper.arxiv === target.id,
-      )
-    )
-      return;
-    const [sourcePaper, targetPaper] = await Promise.all([
-      NeoAccessor.getPaper(source.id),
-      NeoAccessor.getPaper(target.id),
-    ]);
-    if (sourcePaper && targetPaper) {
-      openSideBar();
-      setChosenPapers([
-        makeChosenPaper(source),
-        makeChosenPaper(target),
-        ...chosenPapers,
-      ]);
-    }
-  };
+  // const handleEdgeClick = async function ({ source, target }:{source:any,target:any}) {
+    
+  //   if (
+  //     chosenPapers.find(
+  //       (paper) => paper.arxiv === source.id || paper.arxiv === target.id,
+  //     )
+  //   )
+  //     return;
+  //   const [{paper:sourcePaper}, {paper:targetPaper}] = await Promise.all([
+  //     NeoAccessor.getPaper(source.id),
+  //     NeoAccessor.getPaper(target.id),
+  //   ]);
+  //   if (sourcePaper && targetPaper) {
+  //     openSideBar();
+  //     addUniqueChosenPapers([sourcePaper,targetPaper])
+  //   }
+  // };
+
+
+  const addUniqueChosenPapers = (papers: GenericPaper[]): void => {
+    // adds papers to chosenPapers in sidebar. Ensures there's no duplicates.
+    setChosenPapers((existingPapers: chosenPaper[] = []) => {
+        const oldPapers = new Set(existingPapers.map(p => p.arxiv));  
+        return [...existingPapers, ...papers.filter(p => !oldPapers.has(p.arxiv)).map(makeChosenPaper)];
+    });
+};
+
   const setNodeColor = function (node): string {
     // add one for those being the neighbor of the selected Paper.
     if (node.id === selectedPaper) return "rgb(220,0,0,1)";
@@ -127,11 +122,9 @@ export default function ForceGraph({
     return "rgba(0,255,255,0.6)";
 
   };
-
   const setNodeSize = function (node): number {
     return Math.trunc(5 * 20 ** (Math.min(100,node.refCount)/100))
   }
-
   return (
     <div className="relative">
       <ExtractionDisplay/>
@@ -144,8 +137,9 @@ export default function ForceGraph({
           nodeColor={setNodeColor}
           onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
-          onLinkClick={handleEdgeClick}
-          nodeLabel={(node) => `${node.refCount}-${setNodeSize(node)}`}
+          nodeLabel={(node) => node.title}
+          // onLinkClick={handleEdgeClick} // FIXME: possibly bring back
+          // nodeLabel={(node) => `${node.refCount}-${setNodeSize(node)}`}
           nodeVal={setNodeSize}
         />
       )}

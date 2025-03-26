@@ -1,4 +1,4 @@
-import { QueryConfig, ResultSummary, session } from "neo4j-driver";
+import { error, QueryConfig, ResultSummary, session } from "neo4j-driver";
 import driver from "../../db/src/config.js";
 import { string } from "zod";
 import { GenericPaper, VacuousPaper, FullPaper, isFullPaper, makeVacuousPaper,Node, Edge} from "./convert.js";
@@ -105,25 +105,26 @@ export default class NeoAccessor {
         return [];
     }
 
-    public static async getPaper(arxiv: string): Promise<GenericPaper | null>{
-        // gets paper with given arxivdID. Returns null if none exists
+    public static async getPaper(arxiv: string): Promise<{paper:GenericPaper,refCount:number}>{
+        // gets paper with given arxivdID. Requires paper to exist in graph
         const QUERY = `
             MATCH (p:Paper {arxiv: $arxiv})
-            RETURN p
+            RETURN p, COUNT{()-[:REFERENCED]->(p)} as refCount
             LIMIT 1
             `
         const session = driver.session();
-        let nodePaper;
         try {
             const result = await session.run(QUERY,{arxiv:arxiv})
-            const node = result.records[0]?.get('p').properties
-            if (node) nodePaper = QueryHelper.convertToPaper(node)
+            if (result.records[0]) {
+                const nodePaper = QueryHelper.convertToPaper(result.records[0].get('p').properties)
+                const refCount = result.records[0]._fieldLookup?.refCount
+                return {paper:nodePaper,refCount:refCount}
+            }
+            throw new Error(`Paper with arxivID ${arxiv} was not found`)
         } catch (error) {
-            console.error(`Issue getting paper with arxiv id ${arxiv}`, error)
             throw error
         } finally {
             session.close()
-            return nodePaper || null
         }
     }
 
