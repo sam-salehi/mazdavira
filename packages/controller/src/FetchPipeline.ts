@@ -48,7 +48,7 @@ export default class FetchPipeline {
             return await NeoAccessor.getReferences(arxivID)
         }
 
-        // await LLMSemaphore.acquire(); // TODO
+        // await LLMSemaphore.acquire();
         let info: paperInfo | undefined = undefined;
 
         // timeout for exhaustion errors and try again after 5 seconds.
@@ -107,8 +107,9 @@ export default class FetchPipeline {
     private static async fetchReferencePaperDetails(p: reference): Promise<VacuousPaper> {
         let paper : VacuousPaper;
         
-        const fp = await NeoAccessor.getPaper(p.arxiv)
-        if (fp) {
+        const extractedPaperExists = await NeoAccessor.isPaperExtracted(p.arxiv)
+        if (extractedPaperExists) {
+            const {paper: fp} = await NeoAccessor.getPaper(p.arxiv)
             return  makeVacuousPaper(fp.title,fp.arxiv,fp.pdf_link || "")
         } else {
             const pdfLink = await fetchPaperPDFLink(p.arxiv)
