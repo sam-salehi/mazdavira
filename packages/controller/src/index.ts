@@ -24,17 +24,10 @@ import NeoAccessor from "@repo/db/neo";
 // const arxiv = PaperExtractor.extractReferenceSection(pdf)
 // console.log(arxiv)
 
-
-
-
 // getReferencedCount("1706.03762")
-
 // FetchPipeline.extractPaperWithDepth("1706.03762",1)
-
 // const {node,refCount} = await NeoAccessor.getPaper("1411.4952")
 // console.log(refCount)
-
-
 // const data = await NeoAccessor.getEntireGraph()
 
-// console.log(data.nodes)
+

@@ -3,6 +3,8 @@ import NeoAccessor from "@repo/db/neo";
 import  {type Edge,type Node, type FullPaper, GenericPaper } from "@repo/db/convert"
 import {SOCKET_URL, type SocketMessage} from "@repo/socket/src/config"
 import useWebSocket from 'react-use-websocket';
+import {type ReadyState } from "react-use-websocket";
+
 // Context provider for nodes passed onto the graph.
 
 export type SocketStatus = "connecting" | "connected" | "closed"
@@ -13,7 +15,9 @@ interface GraphDataType {
     callBFS: (id:string,depth:number) => void,
     updateLastFetch: ()=>void,
     fetchingNodesCount: number,
-    socketStatus: SocketStatus
+    socketStatus: ReadyState,
+    fetchAllNewData: () => void,
+    canUpdate: boolean 
 }
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
@@ -162,7 +166,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
  }
 
 
-    const SocketStates: SocketStatus[] = ["connecting","connected","closed","closed"]
 
 
       const value = {
@@ -171,7 +174,9 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         callBFS,
         updateLastFetch,
         fetchingNodesCount,
-        socketStatus:SocketStates[readyState],
+        socketStatus:readyState,
+        fetchAllNewData,
+        canUpdate
       }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }
