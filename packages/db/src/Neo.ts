@@ -293,7 +293,6 @@ export default class NeoAccessor {
         }
     }
 
-
     private static async paperExists(arxiv: string): Promise<boolean> {
         // check to see if label Paper if arxivID exists.
         const session = driver.session()

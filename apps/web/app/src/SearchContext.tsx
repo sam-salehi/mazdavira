@@ -12,7 +12,7 @@ interface SearchContextType {
     setSearchInput:  React.Dispatch<React.SetStateAction<string>>
     searchResults: SearchResult[]
     setSearchResults: React.Dispatch<React.SetStateAction<SearchResult[]>>
-    submitSearch: () => void
+    submitSearch: () => Promise<void>
 }
 
 const SearchContext = createContext<SearchContextType |undefined>(undefined)

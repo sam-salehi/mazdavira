@@ -6,9 +6,6 @@ import NeoAccessor from "@repo/db/neo"
 import {FullPaper, GenericPaper, VacuousPaper,makeVacuousPaper} from "@repo/db/convert"
 import Semaphore from "./semaphore.js"
 
-
-
-
 const LLMSemaphore = new Semaphore(3) 
 
 export default class FetchPipeline {

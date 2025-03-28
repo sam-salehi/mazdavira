@@ -44,7 +44,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     const [fetchingNodesCount,setFetchingNodesCount] =  useState<number>(0);
     
     // * sendMessage sends message to 
-    const {sendMessage, lastMessage, readyState} = useWebSocket(SOCKET_URL)
+    const { sendMessage, lastMessage, readyState } = useWebSocket(SOCKET_URL);    
 
     useEffect(() => {
         if (lastMessage !== null) {

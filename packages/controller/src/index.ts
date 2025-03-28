@@ -31,5 +31,3 @@ import NeoAccessor from "@repo/db/neo";
 // const data = await NeoAccessor.getEntireGraph()
 
 
-const paper = await NeoAccessor.getPaper("1509.09308")
-console.log(paper)
