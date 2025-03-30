@@ -32,6 +32,8 @@
     "@langchain/community": "^0.3.26",
     "@langchain/core": "^0.3.33",
     "@supabase/supabase-js": "^2.48.1",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-node": "^4.22.0",
     "@trigger.dev/sdk": "^3.3.12",
     "@types/xml2js": "^0.4.14",
     "3d-force-graph": "^1.76.1",

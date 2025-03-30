@@ -9,17 +9,36 @@ import { generateSummary } from "@repo/model/src/referanceExtraction.js";
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 
 import { logger, task, tasks } from "@trigger.dev/sdk/v3";
-
 import NeoAccessor from "@repo/db/neo";
+
+import Tokenizer from "@repo/model/src/tokenizer.js"
 
 
 
 // const today = new Date();
 // today.setDate(today.getDate() - 1);
 // const yesterdayISOString = today.toISOString();
-// const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
+const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
 // const arxiv = PaperExtractor.extractReferenceSection(pdf)
 // console.log(arxiv)
 
-const pop = FetchPipeline.extractPaperWithDepth("1706.03762",1)
+// const pop = FetchPipeline.extractPaperWithDepth("1706.03762",1)
+
+
+// 1. Set up embedding algorithm for pdf
+// 2. Add embedding to db
+// 3. Call algorithm on extraction
+// 4. fetch embeddings on front end. (Must do these steps efficiently to prevent slow down.)
+// 5. 
+
+
+
+// const paper = await PaperExtractor.extractBody(pdfLink)    
+
+// const chunks =  await Tokenizer.generateEmbedding(paper)
+
+
+
+
+
 
