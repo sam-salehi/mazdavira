@@ -50,7 +50,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         if (lastMessage !== null) {
             const msg: SocketMessage = JSON.parse(lastMessage.data)
             if (msg.type === "update-signal") {
-                setCanUpdate(true) // user could add new nodes it they want            
+                setCanUpdate(true) // user could add new nodes by refreshing graph       
             } else if (msg.type === "extract-notice") {
                 addBFSNode(msg.arxiv)
             } else if (msg.type === "extract-count-update") {
@@ -86,6 +86,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     async function addBFSNode(arxiv: string) {
         // get nodes and edges associated to arxiv from graph.
         // fetch related information
+        console.log("Updating node ", arxiv)
         const {paper, refCount} : {paper: GenericPaper, refCount: number} = await NeoAccessor.getPaper(arxiv);
         if (paper) {
             const fp: FullPaper = paper as FullPaper
@@ -105,10 +106,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
             throw Error(`Paper ${arxiv} was passed as callback without being saved in database.`)
         }
     }
-
     const makeEdgeString = (source:string,target:string) =>  `${source}-${target}`
-
-
+    
     function updateNodesData(newNodes: Node[]) {
         // adds unique new nodes and updates old nodes in graphData
         // in two strategies for memory efficiency.
@@ -138,7 +137,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                     nodes: [...nodes], 
                     links: [...links], 
                 };
-
             })
         }
     }
@@ -147,9 +145,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
       setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
             const existingNodeIDs = new Set(nodes.map((n) => n.id));
             const existingLinkIDs = new Set(links.map((link) => makeEdgeString(link.source,link.target)))
-
             const linkFilter = (link: Edge) => (
-                !existingLinkIDs.has(makeEdgeString(link.source,link.target)) &&
+                !existingLinkIDs.has(makeEdgeString(link.source,link.target)) && 
                 existingNodeIDs.has(link.source) &&
                 existingNodeIDs.has(link.target)
             )

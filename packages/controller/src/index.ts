@@ -14,20 +14,12 @@ import NeoAccessor from "@repo/db/neo";
 
 
 
-
-
 // const today = new Date();
 // today.setDate(today.getDate() - 1);
 // const yesterdayISOString = today.toISOString();
-
 // const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
 // const arxiv = PaperExtractor.extractReferenceSection(pdf)
 // console.log(arxiv)
 
-// getReferencedCount("1706.03762")
-// FetchPipeline.extractPaperWithDepth("1706.03762",1)
-// const {node,refCount} = await NeoAccessor.getPaper("1411.4952")
-// console.log(refCount)
-// const data = await NeoAccessor.getEntireGraph()
-
+const pop = FetchPipeline.extractPaperWithDepth("1706.03762",1)
 

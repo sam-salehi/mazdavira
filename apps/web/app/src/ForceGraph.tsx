@@ -7,6 +7,7 @@ import { useGraphDataContext } from "./GraphDataContext";
 import ExtractionDisplay from "@/components/display/ExtractionDisplay";
 
 
+
 // FIXME: move to display folder
 
 export default function ForceGraph({
@@ -72,10 +73,7 @@ export default function ForceGraph({
     graphRef.current.cameraPosition(newPos, node, 3000);
   };
 
-  const handleNodeHover = async function (node: any) {
-    if (!node || hoverNodeID === node.id) return;
-    setHoverNodeID(node.id || null);
-  };
+
 
   const handleNodeClick = async function (node: any) {
     zoomOntoNode(node);
@@ -86,23 +84,18 @@ export default function ForceGraph({
     setSelectedPaper(paper.arxiv);
   };
 
-  // const handleEdgeClick = async function ({ source, target }:{source:any,target:any}) {
-    
-  //   if (
-  //     chosenPapers.find(
-  //       (paper) => paper.arxiv === source.id || paper.arxiv === target.id,
-  //     )
-  //   )
-  //     return;
-  //   const [{paper:sourcePaper}, {paper:targetPaper}] = await Promise.all([
-  //     NeoAccessor.getPaper(source.id),
-  //     NeoAccessor.getPaper(target.id),
-  //   ]);
-  //   if (sourcePaper && targetPaper) {
-  //     openSideBar();
-  //     addUniqueChosenPapers([sourcePaper,targetPaper])
-  //   }
-  // };
+  const handleEdgeClick = async function ({ source, target }:{source:any,target:any}) {
+   
+    console.log(graphData.links.filter(l => ((l.source === source && l.target === target) || (l.source === target && l.target == source))))
+    const [{paper:sourcePaper}, {paper:targetPaper}] = await Promise.all([
+      NeoAccessor.getPaper(source.id),
+      NeoAccessor.getPaper(target.id),
+    ]);
+    if (sourcePaper && targetPaper) {
+      openSideBar();
+      addUniqueChosenPapers([sourcePaper,targetPaper])
+    }
+  };
 
 
   const addUniqueChosenPapers = (papers: GenericPaper[]): void => {
@@ -123,7 +116,7 @@ export default function ForceGraph({
 
   };
   const setNodeSize = function (node): number {
-    return Math.trunc(5 * 20 ** (Math.min(100,node.refCount)/100))
+    return Math.trunc(5 * 20 ** (Math.min(50,node.refCount)/50))
   }
   return (
     <div className="relative">
@@ -135,10 +128,10 @@ export default function ForceGraph({
           backgroundColor="#000000"
           nodeAutoColorBy={"recCount"}
           nodeColor={setNodeColor}
-          onNodeHover={handleNodeHover}
+          // onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
           nodeLabel={(node) => node.title}
-          // onLinkClick={handleEdgeClick} // FIXME: possibly bring back
+          onLinkClick={handleEdgeClick}
           // nodeLabel={(node) => `${node.refCount}-${setNodeSize(node)}`}
           nodeVal={setNodeSize}
         />

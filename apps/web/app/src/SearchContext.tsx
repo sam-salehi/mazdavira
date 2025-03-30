@@ -23,9 +23,6 @@ export const SearchContextProvider: React.FC<{children:ReactNode}> = ({children}
 
     const [searchInput, setSearchInput] = useState<string>("")
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-
-
-
     // searches db for searchInput as title
     // adds found results into searchResults.
     async function submitSearch() {
