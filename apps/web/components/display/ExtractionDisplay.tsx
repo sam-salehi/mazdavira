@@ -11,10 +11,10 @@ function ExtractionDisplay() {
     // Display of server-side extraction in callBFS on screen
     const {fetchingNodesCount,socketStatus,canUpdate, fetchAllNewData} = useGraphDataContext();
     return (
-        <div className={clsx("absolute z-20 left-0 top-0 h-fit w-fit mt-5 ml-5", {
+        <div className={clsx("absolute z-20 left-0 top-0 h-fit w-fit mt-5 ml-5 bg-transparent", {
             "animated-border": fetchingNodesCount !== 0})}>
             <div className="relative p-7 bg-black">  {/* Inner content */}
-                <Button className="bg-transparent" disabled={!canUpdate} onClick={fetchAllNewData}>
+                <Button className={clsx("bg-transparent", {"c-blue-border" : canUpdate})} disabled={!canUpdate} onClick={fetchAllNewData}>
                     <Rotate3dIcon className="text-[rgb(0,255,255)]"/>
                 </Button>
                 <Header color={BLUE}>Extraction count: {fetchingNodesCount}</Header>

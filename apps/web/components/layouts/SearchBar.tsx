@@ -58,7 +58,7 @@ function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[
 
 
     if (searchResults.length === 0) return <div className="w-fit mx-auto">
-        <h1>No Results founds</h1>
+        <h1 className="text-white">No Results founds</h1>
     </div>    
 
     return <div className=" h-[90%] overflow-y-scroll hide-scrollbar">

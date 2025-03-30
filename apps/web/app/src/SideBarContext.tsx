@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-const SideBarContext = createContext<SideBarMethods | undefined>(undefined); // TODO: move higher to be accessible form graph as well
+const SideBarContext = createContext<SideBarMethods | undefined>(undefined); 
 
 type SidebarTabType = "nav"|"chat" | "search"
 
@@ -35,6 +35,6 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({
     openChat,
     openSearch
     }
-
+ 
     return  <SideBarContext.Provider value={value}>{children}</SideBarContext.Provider>
   }

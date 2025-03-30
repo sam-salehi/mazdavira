@@ -131,3 +131,8 @@
 .blue-fill {
   fill: #00ffff
 }
+
+
+.c-blue-border { 
+  border: solid #00ffff
+}

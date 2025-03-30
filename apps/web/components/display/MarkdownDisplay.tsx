@@ -73,7 +73,7 @@ const MarkdownStreamer: React.FC<MarkdownStreamerProps> = ({
         const jump = Math.floor(Math.random() * 5) + 1;
         index = index + jump < text.length ? index + jump : text.length;
       } else {
-        clearInterval(intervalId); // Clear the interval when done
+        clearInterval(intervalId);
         onFinishedDisplaying(id);
       }
     }, delay);
@@ -81,11 +81,7 @@ const MarkdownStreamer: React.FC<MarkdownStreamerProps> = ({
     return () => clearInterval(intervalId);
   }, [id, text, delay, onFinishedDisplaying]);
 
-  return (
-    <div>
-      <ReactMarkdown>{displayedText}</ReactMarkdown>
-    </div>
-  );
+  return <ReactMarkdown>{displayedText}</ReactMarkdown>
 };
 
 export default MarkdownDisplay;

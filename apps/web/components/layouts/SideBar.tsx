@@ -22,7 +22,6 @@ export function Sidebar({
   chosenPapers: chosenPaper[];
   setChosenPapers: (papers: chosenPaper[]) => void;
 }) {
-
   const {sidebarTab,openChat,openNavigation,openSearch} = useSideBarContext()
 
   return (

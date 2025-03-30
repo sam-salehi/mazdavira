@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
 import { useChatContext } from "@/app/src/ChatContext";
 import { Textarea } from "../ui/textarea";
 import MarkdownDisplay from "../display/MarkdownDisplay";
+import { Button } from "../ui/button";
 
 export default function ChatLayout() {
   const { chatHistory } = useChatContext();
@@ -64,29 +64,35 @@ const MessageInput = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (input) {
-        generateResponse(input);
-        setInput("");
-      }
+      handleSubmit()
     }
   };
+
+  const handleSubmit = () => {
+    if (input) {
+      generateResponse(input)
+      setInput("")
+    }
+  }
 
   useEffect(() => {
     handleResize();
   }, [input]);
 
   return (
-    <form>
+    <div className="relative mt-10">
       <Textarea
         ref={textareaRef}
-        className="w-[100%] bg-white absolute bottom-6 p-2 rounded shadow-xl resize-none"
-        placeholder="Say something..."
+        className="w-full bg-white p-2 rounded shadow-xl resize-none h-auto"
+        placeholder="Ask Anything ..."
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
         rows={1}
-        style={{ height: "auto" }}
       />
-    </form>
+      <Button className="absolute h-6 right-2 bottom-2 bg-black text-white z-10" onClick={handleSubmit}>
+        Submit
+      </Button>
+    </div>
   );
 };
