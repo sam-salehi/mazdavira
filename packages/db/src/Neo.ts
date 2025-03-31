@@ -36,7 +36,7 @@ export default class NeoAccessor {
         const QUERY = `
             MATCH (p:Paper)
             ${creation_time ? `WHERE p.created_at > $creation_time` : ""}
-            RETURN p.title as title, p.arxiv as arxiv, COUNT{()-[:REFERENCED]->(p)} as refCount, p.extracted as extracted
+            RETURN p.title as title, p.arxiv as arxiv, COUNT{()-[:REFERENCED]->(p)} as refCount, p.extracted as extracted, p.tokenization as tokenization
             `
 
         let nodes: Node[] = [];
@@ -49,7 +49,7 @@ export default class NeoAccessor {
                 result = await session.run(QUERY)
             }
             
-            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount: rec._fields[2], extracted: rec._fields[3]}))
+            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount: rec._fields[2], extracted: rec._fields[3],tokenization: rec._fields[4]}))
         } catch (error) {
             console.error("There was an issue fetching all nodes", error)
             throw error
@@ -204,7 +204,7 @@ export default class NeoAccessor {
         );
         await session.close();
         const res = result.records.map(record => record.get('p.arxiv'))
-        console.log("Recieved referenced IDS: ", res)
+
         return res;
     }
 
@@ -258,7 +258,6 @@ export default class NeoAccessor {
             return paperID
         } catch (error) {
             console.error(`Issue updating paper with title: ${paper.title}`)
-            console.log(paper)
             throw error
         } finally {
             session.close()
@@ -269,9 +268,6 @@ export default class NeoAccessor {
         // connects the given refeerence to the paper with Neo4j identifier paperid. 
         // if such reference does't exist, it crates vaccuous node.
         // ** references only need to be Vacuous on extraction from another paper
-        console.log("Pushing reference", reference)
-        console.log("Generated Query: ", QueryHelper.generatePaperQuery(reference).replace("Paper ",""))
-
 
         const session = driver.session() 
         const QUERY = `
@@ -368,6 +364,7 @@ class QueryHelper {
             { key: "arxiv", value: node.arxiv },
             { key: "pdf_link", value: node.pdf_link }, 
             {key: "extracted", value: false} ,
+            {key: "tokenization", value:node.tokenization},
             {key:"created_at", value: getPushTime()}
         ];
         return properties

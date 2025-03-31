@@ -17,7 +17,7 @@ interface GraphDataType {
     fetchingNodesCount: number,
     socketStatus: ReadyState,
     fetchAllNewData: () => void,
-    canUpdate: boolean 
+    canUpdate: boolean,
 }
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
@@ -42,7 +42,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     // const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
     
     const [fetchingNodesCount,setFetchingNodesCount] =  useState<number>(0);
-    
+
+
     // * sendMessage sends message to 
     const { sendMessage, lastMessage, readyState } = useWebSocket(SOCKET_URL);    
 
@@ -86,8 +87,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     async function addBFSNode(arxiv: string) {
         // get nodes and edges associated to arxiv from graph.
         // fetch related information
-        console.log("Updating node ", arxiv)
         const {paper, refCount} : {paper: GenericPaper, refCount: number} = await NeoAccessor.getPaper(arxiv);
+        console.log("Updating node: ", paper)
         if (paper) {
             const fp: FullPaper = paper as FullPaper
             const node: Node = parsePaperForGraph(fp,refCount);
@@ -111,6 +112,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     function updateNodesData(newNodes: Node[]) {
         // adds unique new nodes and updates old nodes in graphData
         // in two strategies for memory efficiency.
+
         if (newNodes.length > 5) {
             setGraphData(({ nodes = [], links = [] } = { nodes: [], links: [] }) => {
                 const existingNodes = new Map<string,Node>();
@@ -173,8 +175,8 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         fetchingNodesCount,
         socketStatus:readyState,
         fetchAllNewData,
-        canUpdate
-      }
+        canUpdate,
+    }
     return <GraphDataContext.Provider value={value}>{children}</GraphDataContext.Provider>
 }
 

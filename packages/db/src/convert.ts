@@ -43,7 +43,8 @@ export type Node = { // used for presenting nodes and edges on Graph visualizati
     id: string; // arxiv id
     title: string;
     refCount: number;
-    extracted: boolean // for displaying in dimmer color
+    extracted: boolean // for displaying in dimmer color,
+    tokenization:number[]
 }
 
 export type Edge = {

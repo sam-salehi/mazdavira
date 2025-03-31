@@ -5,6 +5,7 @@ import {type GenericPaper } from "@repo/db/convert"
 import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
 import ExtractionDisplay from "@/components/display/ExtractionDisplay";
+import { Node } from "@repo/db/convert";
 
 
 
@@ -24,10 +25,11 @@ export default function ForceGraph({
   setSelectedPaper: (s: string) => void;
 }) {
 
-  const [hoverNodeID, setHoverNodeID] = useState<string>("");
+
+
+
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
-  
-  const {graphData} =  useGraphDataContext();
+  const {graphData,tokenMap} =  useGraphDataContext();
   
   const graphRef = useRef<ForceGraphMethods|null>(null)
   
@@ -41,21 +43,25 @@ export default function ForceGraph({
       const neighborIDs: string[] = neighbors.map(n => n.arxiv)
       setSelectedPapersNeighbors(new Set(neighborIDs))
     }
-
     getNeighbours(selectedPaper)
-
   },[selectedPaper,graphData]) 
-
 
   useEffect(() => {
     if (graphRef.current) {
-      const linkForce = graphRef.current.d3Force("link");
-      if (linkForce) {
-        linkForce.distance(100); // TODO configure
-        graphRef.current.refresh(); 
-      }
+      graphRef.current.d3Force('link')
+        .distance(link => setLinkForce(link.source,link.target))
     }
   }, [graphData])
+
+
+  const defaultLength = 100 
+  const setLinkForce = function(source:Node,target:Node):number {
+    if (!source.extracted || !target.extracted) return defaultLength
+    const sim = cosineSim(source.tokenization,target.tokenization)
+    return 2000 - 1900*sim
+
+  }
+
 
   const zoomOntoNode = function (node: any) {
     const distance = 40;
@@ -76,6 +82,7 @@ export default function ForceGraph({
 
 
   const handleNodeClick = async function (node: any) {
+    console.log(node)
     zoomOntoNode(node);
     if (chosenPapers.find((paper) => paper.arxiv === node.id)) return;
     const {paper}: {paper:GenericPaper} = await NeoAccessor.getPaper(node.id);
@@ -109,7 +116,6 @@ export default function ForceGraph({
   const setNodeColor = function (node): string {
     // add one for those being the neighbor of the selected Paper.
     if (node.id === selectedPaper) return "rgb(220,0,0,1)";
-    if (node.id === hoverNodeID) return "rgb(0,0,139,1)"
     if (selectedPapersNeighbors.has(node.id)) return "rgb(255,204,0,1)" 
     if (!node.extracted) return "rgb(128, 128, 128)"
     return "rgba(0,255,255,0.6)";
@@ -128,7 +134,6 @@ export default function ForceGraph({
           backgroundColor="#000000"
           nodeAutoColorBy={"recCount"}
           nodeColor={setNodeColor}
-          // onNodeHover={handleNodeHover}
           onNodeClick={handleNodeClick}
           nodeLabel={(node) => node.title}
           onLinkClick={handleEdgeClick}
@@ -141,3 +146,22 @@ export default function ForceGraph({
 }
 
 
+
+
+const cosineSim = function (A:number[], B:number[]):number {
+
+  if (A.length !== B.length) throw new Error(`Dimensions A: ${A.length} and B: ${B.length} do not match up`)
+  let dotproduct = 0;
+  let mA = 0;
+  let mB = 0;
+
+  for(let i = 0; i < A.length; i++) {
+      dotproduct += A[i] * B[i];
+      mA += A[i] * A[i];
+      mB += B[i] * B[i];
+  }
+  mA = Math.sqrt(mA);
+  mB = Math.sqrt(mB);
+  const similarity = dotproduct / (mA * mB);
+  return similarity;
+}
