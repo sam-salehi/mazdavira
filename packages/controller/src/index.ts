@@ -22,7 +22,8 @@ const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
 // const arxiv = PaperExtractor.extractReferenceSection(pdf)
 // console.log(arxiv)
 
-// const pop = FetchPipeline.extractPaperWithDepth("1706.03762",1)
+const pop = FetchPipeline.extractPaperWithDepth("1706.03762",1)
+console.log(pop)
 
 
 // 1. Set up embedding algorithm for pdf

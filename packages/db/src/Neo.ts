@@ -354,7 +354,8 @@ class QueryHelper {
             { key: "arxiv", value: node.arxiv },
             { key: "referencing_count", value: node.referencing_count },
             { key: "pdf_link", value: node.pdf_link }, 
-            {key: "extracted", value: true}  
+            {key: "extracted", value: true},
+            {key:"tokenization",value:node.tokenization}
         ];
 
         if (createDateTime) properties.push({key:"created_at", value: getPushTime()})  // FIXME: remove getPushTime from here

@@ -8,12 +8,14 @@ export interface GenericPaper {
     institutions: string[],
     pub_year: number,
     referencing_count: number,
+    tokenization: number[]
 }
 
 // Representing papers that have not been extracted by llm or for just passing basic information around.
 export interface VacuousPaper extends GenericPaper {
     authors: []
     institutions: []
+    tokenizaton: []
     pub_year: 0
     referencing_count: 0,
     extracted: false

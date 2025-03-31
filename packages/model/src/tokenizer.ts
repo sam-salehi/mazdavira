@@ -1,28 +1,32 @@
 import * as tf from '@tensorflow/tfjs-node';  // Change to tfjs-node
 import use from '@tensorflow-models/universal-sentence-encoder';  // Universal Sentence Encoder
+import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 
-type Token = any
+
+type Token = number[]
 
 // Initialize the backend
 async function initializeTF() {
     await tf.ready();  // No need to set backend explicitly with tfjs-node
 }
 
+
+let model = await use.load()
+
 export default class Tokenizer {
 
     static readonly word_count = 256;
 
     static async generateEmbedding(text: string): Promise<Token> {
+        // makes single embedding vector for text
         await initializeTF(); 
         const chunks = this.generateChunks(text)
-        console.log(chunks.length)
         const embedding = await this.getAverageEmbedding(chunks)
-        console.log(embedding)
         return embedding
     }
 
     private static generateChunks(text:string) : string[] {
-        // splits text upto chunks of 256 words
+        // splits text upto chunks respecting token lengths for model
         const words = text.split(" ")
         const chunks = []
         let i = 0
@@ -35,7 +39,8 @@ export default class Tokenizer {
     }
 
     private static async getAverageEmbedding(texts:string[]): Promise<Token> {
-        const model = await use.load()
+        // generates embedding for each text and takes average
+        if (!model) model = await use.load()
         const embeddings = await model.embed(texts);
         const embeddingArray = embeddings.arraySync(); 
         const tensor = tf.tensor(embeddingArray)

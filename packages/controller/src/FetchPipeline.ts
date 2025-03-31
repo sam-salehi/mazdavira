@@ -2,6 +2,7 @@ import {type paperInfo, type reference} from "@repo/model/src/config.js"
 import {fetchPaperPDFLink, fetchArxivID} from "@repo/fetch/src/urlFetcher.js" 
 import {PaperExtractor} from "@repo/fetch/src/pdfExtractor.js";
 import {extractInformation} from "@repo/model/src/referanceExtraction.js"
+import Tokenizer from "@repo/model/src/Tokenizer.js"
 import NeoAccessor from "@repo/db/neo"
 import {FullPaper, GenericPaper, VacuousPaper,makeVacuousPaper} from "@repo/db/convert"
 import Semaphore from "./semaphore.js"
@@ -45,7 +46,7 @@ export default class FetchPipeline {
             return await NeoAccessor.getReferences(arxivID)
         }
 
-        // await LLMSemaphore.acquire();
+        await LLMSemaphore.acquire();
         let info: paperInfo | undefined = undefined;
 
         // timeout for exhaustion errors and try again after 5 seconds.
@@ -61,7 +62,7 @@ export default class FetchPipeline {
         }
         info.arxiv = arxivID // just passing arxiv for safety
         const [srcPaper, referencedPapers]= await this.castToPapers(info)
-        // LLMSemaphore.release();
+        LLMSemaphore.release();
         NeoAccessor.pushExtraction(srcPaper,referencedPapers,paper_extracted_callback) // async 
         return referencedPapers
     }
@@ -82,12 +83,14 @@ export default class FetchPipeline {
 
     private static async fetchPaperDetails(p: paperInfo): Promise<FullPaper> {
         // Helper function to fetch paper details and parse it to standard Paper type format
-        // don't extract information about paper if already in db. Just take it out
-        const [pdfSourceLinkResult] = await Promise.allSettled([
-            fetchPaperPDFLink(p.arxiv),
-        ]);
 
-        const pdfSourceLink: string | null = pdfSourceLinkResult.status === 'fulfilled' ? pdfSourceLinkResult.value : null;
+        const pdfLink = await fetchPaperPDFLink(p.arxiv)
+        let tokenization :number[] = []
+        if (pdfLink) {
+            const paperBody = await PaperExtractor.extractBody(pdfLink)
+            tokenization = await Tokenizer.generateEmbedding(paperBody)   
+        }
+
         return {
             title: p.title,
             authors: p.authors,
@@ -95,8 +98,9 @@ export default class FetchPipeline {
             pub_year: p.pub_year,
             arxiv: p.arxiv ,
             referencing_count: p.referencing_count,
-            pdf_link: pdfSourceLink || "",
-            extracted: true
+            pdf_link: pdfLink || "",
+            extracted: true,
+            tokenization
         };
     }
 
