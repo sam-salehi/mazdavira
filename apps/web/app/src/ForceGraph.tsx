@@ -54,12 +54,13 @@ export default function ForceGraph({
   }, [graphData])
 
 
-  const defaultLength = 100 
-  const setLinkForce = function(source:Node,target:Node):number {
-    if (!source.extracted || !target.extracted) return defaultLength
-    const sim = cosineSim(source.tokenization,target.tokenization)
-    return 2000 - 1900*sim
+  const minLength = 100 
+  const maxLength = 2000
 
+  const setLinkForce = function(source:Node,target:Node):number {
+    if (!source.extracted || !target.extracted) return minLength
+    const sim = cosineSim(source.tokenization,target.tokenization)
+    return maxLength - (maxLength - minLength)*sim   
   }
 
 

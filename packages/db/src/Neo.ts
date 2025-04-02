@@ -81,10 +81,6 @@ export default class NeoAccessor {
         return edges
     }
 
-
-
-
-
     public static async getPapersByTitle(title: string): Promise<FullPaper[]> {
         // fetches papers containing given string inside title, case insensitive.
         const QUERY = `MATCH (p:Paper) 

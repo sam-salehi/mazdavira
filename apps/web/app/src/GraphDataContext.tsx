@@ -164,9 +164,6 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     updateEdgesData(newLinks)
  }
 
-
-
-
       const value = {
         graphData,
         setGraphData,
@@ -190,5 +187,6 @@ export const useGraphDataContext = () => {
 
 function parsePaperForGraph(paper: FullPaper,refCount:number): Node {
     // used to turn type Paper fetched form db suitable for graph.
-    return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted}
+    // TODO: move to Neo side.
+    return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted, tokenization:paper.tokenization}
 }
