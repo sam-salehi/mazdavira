@@ -2,8 +2,7 @@ import { Button } from "@/components/ui/button";
 import ChatLayout from "./Chat";
 import Navbar from "./Navbar";
 import { chosenPaper } from "@/app/page";
-import { SearchInput } from "./SearchBar";
-import SearchSideBar from "./SearchBar";
+import { SearchInput, SearchSideBar } from "./SearchBar";
 import { SearchContextProvider } from "@/app/src/SearchContext";
 import { useSideBarContext } from "@/app/src/SideBarContext";
 

@@ -12,7 +12,9 @@ interface SearchContextType {
     setSearchInput:  React.Dispatch<React.SetStateAction<string>>
     searchResults: SearchResult[]
     setSearchResults: React.Dispatch<React.SetStateAction<SearchResult[]>>
-    submitSearch: () => Promise<void>
+    submitSearch: () => Promise<void>,
+    searchLoading: boolean,
+    setSearchLoading: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const SearchContext = createContext<SearchContextType |undefined>(undefined)
@@ -23,6 +25,9 @@ export const SearchContextProvider: React.FC<{children:ReactNode}> = ({children}
 
     const [searchInput, setSearchInput] = useState<string>("")
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [searchLoading,setSearchLoading] = useState<boolean>(false);
+
+
     // searches db for searchInput as title
     // adds found results into searchResults.
     async function submitSearch() {
@@ -44,6 +49,8 @@ export const SearchContextProvider: React.FC<{children:ReactNode}> = ({children}
         searchResults,
         setSearchResults,
         submitSearch,
+        searchLoading,
+        setSearchLoading
     }
 
     return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>;
@@ -57,3 +64,4 @@ export const useSearchContext = () => {
     }
     return context
 }
+

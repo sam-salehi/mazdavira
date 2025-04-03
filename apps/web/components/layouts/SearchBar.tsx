@@ -5,14 +5,11 @@ import { chosenPaper, makeChosenPaper } from "@/app/page";
 import {PartialPaperCard} from "../display/PaperCardDisplay";
 import NeoAccessor from "@repo/db/neo";
 import { useSideBarContext } from "@/app/src/SideBarContext";
-import { useState } from "react";
-
 
 export function SearchInput({ onClick }:{onClick:()=>void}) {
 
-    const {searchInput,setSearchInput,submitSearch} = useSearchContext();
+    const {searchInput,setSearchInput,submitSearch,searchLoading,setSearchLoading} = useSearchContext();
     const {openNavigation,openSearch} = useSideBarContext()
-    const [searchLoading,setSearchLoading] = useState<boolean>(false);
 
 
     const handleSubmission = async function() {
@@ -47,17 +44,17 @@ export function SearchInput({ onClick }:{onClick:()=>void}) {
     );
 }
 
-function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[], setChosenPapers:(s:any)=>void}) {
-    const {searchResults} = useSearchContext()
+export function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[], setChosenPapers:(s:any)=>void}) {
+    const {searchResults,searchLoading} = useSearchContext()
 
     async function  addChosenPaper(arxivID:string) {
         // catches paper with id from backend and passes appends it to chosenPapers
-        const addedPaper = await NeoAccessor.getPaper(arxivID)
+        const {paper: addedPaper} = await NeoAccessor.getPaper(arxivID)
         if (addedPaper) setChosenPapers((chosenPapers:chosenPaper[]) => [...chosenPapers,makeChosenPaper(addedPaper)])
     }
 
 
-    if (searchResults.length === 0) return <div className="w-fit mx-auto">
+    if (searchResults.length === 0 && !searchLoading) return <div className="w-fit mx-auto">
         <h1 className="text-white">No Results founds</h1>
     </div>    
 
@@ -76,7 +73,6 @@ function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[
 }
 
 
-
 function LoadingIcon() {
 
     return <div className="w-fit h-fit mx-auto" >
@@ -87,8 +83,3 @@ function LoadingIcon() {
     </div>
     
 }
-
-export default SearchSideBar
-
-
-

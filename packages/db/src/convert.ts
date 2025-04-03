@@ -51,3 +51,8 @@ export type Edge = {
     source: string,
     target: string
 }
+
+export function parsePaperForGraph(paper: FullPaper,refCount:number): Node {
+    // used to turn type Paper fetched from db suitable for graph.
+    return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted, tokenization:paper.tokenization}
+}

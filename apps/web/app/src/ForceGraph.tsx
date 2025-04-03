@@ -56,9 +56,11 @@ export default function ForceGraph({
 
   const minLength = 100 
   const maxLength = 2000
+  const defaultLength = 1000
 
   const setLinkForce = function(source:Node,target:Node):number {
     if (!source.extracted || !target.extracted) return minLength
+    if (!source.tokenization || !target.tokenization) return defaultLength
     const sim = cosineSim(source.tokenization,target.tokenization)
     return maxLength - (maxLength - minLength)*sim   
   }
@@ -150,7 +152,6 @@ export default function ForceGraph({
 
 
 const cosineSim = function (A:number[], B:number[]):number {
-
   if (A.length !== B.length) throw new Error(`Dimensions A: ${A.length} and B: ${B.length} do not match up`)
   let dotproduct = 0;
   let mA = 0;

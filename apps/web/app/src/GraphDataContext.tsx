@@ -1,6 +1,6 @@
 import { createContext, ReactNode,useContext,useEffect,useState } from "react";
 import NeoAccessor from "@repo/db/neo";
-import  {type Edge,type Node, type FullPaper, GenericPaper } from "@repo/db/convert"
+import  {type Edge,type Node, type FullPaper, GenericPaper, parsePaperForGraph} from "@repo/db/convert"
 import {SOCKET_URL, type SocketMessage} from "@repo/socket/src/config"
 import useWebSocket from 'react-use-websocket';
 import {type ReadyState } from "react-use-websocket";
@@ -185,8 +185,8 @@ export const useGraphDataContext = () => {
     return context
 }
 
-function parsePaperForGraph(paper: FullPaper,refCount:number): Node {
-    // used to turn type Paper fetched form db suitable for graph.
-    // TODO: move to Neo side.
-    return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted, tokenization:paper.tokenization}
-}
+// function parsePaperForGraph(paper: FullPaper,refCount:number): Node {
+//     // used to turn type Paper fetched form db suitable for graph.
+//     // TODO: move to Neo side.
+//     return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted, tokenization:paper.tokenization}
+// }
