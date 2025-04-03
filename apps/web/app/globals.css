@@ -111,15 +111,16 @@
 } */
 @layer utilities {
   @keyframes border-animation {
-      0% { border-image-source: linear-gradient(45deg, rgb(0,255,255), blue, blue, blue, blue); }
-      20% { border-image-source: linear-gradient(45deg, blue, rgb(0,255,255), blue, blue, blue); }
-      40% { border-image-source: linear-gradient(45deg, blue, blue, rgb(0,255,255), blue, blue); }
-      60% { border-image-source: linear-gradient(45deg, blue, blue, blue, rgb(0,255,255), blue); }
-      80% { border-image-source: linear-gradient(45deg, blue, blue, blue, blue, rgb(0,255,255)); }
-      100% { border-image-source: linear-gradient(45deg, rgb(0,255,255), blue, blue, blue, blue); }
+      0% { border-image-source: linear-gradient(45deg, rgb(0,255,255), black, black, black, black); }
+      20% { border-image-source: linear-gradient(45deg, black, rgb(0,255,255), black, black, black); }
+      40% { border-image-source: linear-gradient(45deg, black, black, rgb(0,255,255), black, black); }
+      60% { border-image-source: linear-gradient(45deg, black, black, black, rgb(0,255,255), black); }
+      80% { border-image-source: linear-gradient(45deg, black, black, black, black, rgb(0,255,255)); }
+      100% { border-image-source: linear-gradient(45deg, rgb(0,255,255), black, black, black, black); }
   }
 
   .animated-border {
+      background-color: transparent;
       border: 5px solid transparent;
       border-image-slice: 1;
       animation: border-animation 3s infinite linear;

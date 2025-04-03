@@ -80,7 +80,7 @@ const MessageInput = () => {
   }, [input]);
 
   return (
-    <div className="relative mt-10">
+    <div className="absolute bottom-5 w-full mt-10">
       <Textarea
         ref={textareaRef}
         className="w-full bg-white p-2 rounded shadow-xl resize-none h-auto"

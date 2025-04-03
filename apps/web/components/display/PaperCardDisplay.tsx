@@ -81,9 +81,6 @@ function FullPaperCard({
     openChat();
   };
 
-
-  if (extracted && authors.length == 0) console.log("Extracted: ",id, " Status", extracted)
-
   return (
     <>
       <Card className="w-full max-w-2xl h-fit mb-5">
@@ -96,7 +93,7 @@ function FullPaperCard({
         {extracted ?
         <>
         <CardContent>
-          <p>{authors.length > 0 ? authors.reduce((acc, val) => acc + val + ", ", "") : "No authors available"}</p>
+          <p>{parseAuthors(authors)}</p>
           <p className="text-sm text-gray-700">{year}</p>
         </CardContent>
         <CardFooter className="flex flex-col gap-1">
@@ -136,6 +133,17 @@ function FullPaperCard({
 
     </>
   );
+}
+
+const parseAuthors = function(authors: string[]): string {
+  // pareses authors neatly for display
+  if (authors.length === 0) return "No Authors Cited"
+  if (authors.length === 1) return authors[0] || "Unknown Author"
+
+
+  let authorsString = authors.slice(0,-1).reduce((acc, val) => acc + val + ", ", "") 
+  authorsString += "and " + authors.at(-1) + "." 
+  return authorsString
 }
 
 
@@ -219,16 +227,12 @@ function PromptQuestionButton({
 
 export function PartialPaperCard({
   title,
-  authors,
-  year,
   onClose,
   onClick,
   handleAddBtn,
   isAdded
 }: {
   title: string;
-  authors?: string[],
-  year?: number,
   onClose?: () => void;
   onClick?: () => void;
   handleAddBtn?: () => void,
