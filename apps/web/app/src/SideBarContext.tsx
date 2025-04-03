@@ -23,7 +23,8 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({
   }) => {
 
 
-    const [sidebarTab, setSidebarTab] = useState<SidebarTabType>("chat",);
+    const [sidebarTab, setSidebarTab] = useState<SidebarTabType>("nav");
+
 
     const openNavigation = () => setSidebarTab("nav");
     const openChat = () => setSidebarTab("chat");

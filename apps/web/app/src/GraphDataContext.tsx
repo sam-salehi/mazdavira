@@ -5,7 +5,11 @@ import {SOCKET_URL, type SocketMessage} from "@repo/socket/src/config"
 import useWebSocket from 'react-use-websocket';
 import {type ReadyState } from "react-use-websocket";
 
-// Context provider for nodes passed onto the graph.
+// Context provider for nodes passed onto the graph
+
+
+// 1. keep account of papers we're waiting for BFS for
+// 2. 
 
 export type SocketStatus = "connecting" | "connected" | "closed"
 
@@ -22,14 +26,19 @@ interface GraphDataType {
 
 const GraphDataContext = createContext<GraphDataType |undefined>(undefined)
 
-export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  => {
-    const [graphData,setGraphData] = useState<{   
+interface GraphDataProviderProps {
+    updateChosenPapers: (arxiv: string) => void;
+    children: ReactNode;
+}
+
+export const GraphDataProvider: React.FC<GraphDataProviderProps> = ({ updateChosenPapers, children }) => {
+    const [graphData, setGraphData] = useState<{   
         nodes: Node[];
         links: Edge[];
-      } | undefined>();
+    } | undefined>();
 
 
-      useEffect(() => {
+    useEffect(() => {
         // loads entire graph from backend for intial fetch
         const fetchGraph = async () => {
             const {nodes,links} = await NeoAccessor.getEntireGraph();
@@ -37,7 +46,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
         }
         fetchGraph()
         updateLastFetch()
-      }, [])
+    }, [])
 
     // const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
     
@@ -54,6 +63,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
                 setCanUpdate(true) // user could add new nodes by refreshing graph       
             } else if (msg.type === "extract-notice") {
                 addBFSNode(msg.arxiv)
+                updateChosenPapers(msg.arxiv)
             } else if (msg.type === "extract-count-update") {
                 setFetchingNodesCount(msg.extraction_count)
             } else {
@@ -63,12 +73,13 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
 
 
     // * canUpdate determines wether new data could be displayed since last fetch
-      const [canUpdate,setCanUpdate] = useState<boolean>(false); 
+    const [canUpdate,setCanUpdate] = useState<boolean>(false); 
     // * newGraphData are those recieved from calling BFS on socket.
 
     // * lastFetch is ISO 860 string of last fetch time.
-      const [lastFetch,setLastFetch] = useState<string>("");
-      const updateLastFetch = () =>  {const date = new Date();setLastFetch(date.toString());} 
+    const [lastFetch,setLastFetch] = useState<string>("");
+    const updateLastFetch = () =>  {const date = new Date();setLastFetch(date.toString());} 
+
     function callBFS(arxiv:string,depth:number) {
         // * depth can't be more than five
         if (depth > 5) throw new RangeError(`Depth ${depth} exceeds the maximum allowed value of ${5}.`);
@@ -164,7 +175,7 @@ export const GraphDataProvider: React.FC<{children:ReactNode}> =  ({children})  
     updateEdgesData(newLinks)
  }
 
-      const value = {
+    const value = {
         graphData,
         setGraphData,
         callBFS,
@@ -185,8 +196,3 @@ export const useGraphDataContext = () => {
     return context
 }
 
-// function parsePaperForGraph(paper: FullPaper,refCount:number): Node {
-//     // used to turn type Paper fetched form db suitable for graph.
-//     // TODO: move to Neo side.
-//     return {id: paper.arxiv, title: paper.title, refCount:refCount, extracted: paper.extracted, tokenization:paper.tokenization}
-// }

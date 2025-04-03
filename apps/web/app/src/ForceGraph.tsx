@@ -6,8 +6,23 @@ import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
 import ExtractionDisplay from "@/components/display/ExtractionDisplay";
 import { Node } from "@repo/db/convert";
+import { useSideBarContext } from "./SideBarContext";
 
+type GraphNode = {
+    id: string;
+    title: string;
+    refCount: number;
+    extracted: boolean;
+    tokenization?: number[];
+    x?: number;
+    y?: number;
+    z?: number;
+}
 
+type GraphLink = {
+    source: GraphNode;
+    target: GraphNode;
+}
 
 // FIXME: move to display folder
 
@@ -29,7 +44,9 @@ export default function ForceGraph({
 
 
   const [selectedPapersNeighbors,setSelectedPapersNeighbors] = useState<Set<string>>(new Set());
-  const {graphData,tokenMap} =  useGraphDataContext();
+  const {graphData} =  useGraphDataContext();
+  const {openNavigation} =  useSideBarContext()
+
   
   const graphRef = useRef<ForceGraphMethods|null>(null)
   
@@ -55,7 +72,7 @@ export default function ForceGraph({
 
 
   const minLength = 100 
-  const maxLength = 2000
+  const maxLength = 5000
   const defaultLength = 1000
 
   const setLinkForce = function(source:Node,target:Node):number {
@@ -89,6 +106,7 @@ export default function ForceGraph({
     zoomOntoNode(node);
     if (chosenPapers.find((paper) => paper.arxiv === node.id)) return;
     const {paper}: {paper:GenericPaper} = await NeoAccessor.getPaper(node.id);
+    openNavigation();
     openSideBar();
     addUniqueChosenPapers([paper])
     setSelectedPaper(paper.arxiv);
@@ -102,6 +120,7 @@ export default function ForceGraph({
       NeoAccessor.getPaper(target.id),
     ]);
     if (sourcePaper && targetPaper) {
+      openNavigation();
       openSideBar();
       addUniqueChosenPapers([sourcePaper,targetPaper])
     }
