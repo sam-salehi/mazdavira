@@ -38,7 +38,9 @@ export const SearchContextProvider: React.FC<{children:ReactNode}> = ({children}
             year: node.pub_year,
             authors: node.authors,
             arxiv: node.arxiv,
-            link: node.pdf_link || ""
+            link: node.pdf_link || "",
+            extracted: node.extracted
+
         }));
         setSearchResults(results)
     }

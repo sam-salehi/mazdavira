@@ -21,6 +21,9 @@ import Tokenizer from "@repo/model/src/tokenizer.js"
 const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
 // const arxiv = PaperExtractor.extractReferenceSection(pdf)
 // console.log(arxiv)
+const nodes = await NeoAccessor.getPaper("1503.05034")
+
+console.log(nodes)
 
 
 

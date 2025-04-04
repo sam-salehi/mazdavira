@@ -5,17 +5,12 @@ import {SOCKET_URL, type SocketMessage} from "@repo/socket/src/config"
 import useWebSocket from 'react-use-websocket';
 import {type ReadyState } from "react-use-websocket";
 
-// Context provider for nodes passed onto the graph
-
-
-// 1. keep account of papers we're waiting for BFS for
-// 2. 
 
 export type SocketStatus = "connecting" | "connected" | "closed"
 
 interface GraphDataType {
     graphData: {nodes: Node[], links: Edge[]},
-    setGraphData: () => void;
+    setGraphData: React.Dispatch<React.SetStateAction<{nodes: Node[], links: Edge[]}>>;
     callBFS: (id:string,depth:number) => void,
     updateLastFetch: ()=>void,
     fetchingNodesCount: number,
@@ -32,10 +27,10 @@ interface GraphDataProviderProps {
 }
 
 export const GraphDataProvider: React.FC<GraphDataProviderProps> = ({ updateChosenPapers, children }) => {
-    const [graphData, setGraphData] = useState<{   
-        nodes: Node[];
-        links: Edge[];
-    } | undefined>();
+    const [graphData, setGraphData] = useState<{ nodes: Node[]; links: Edge[] }>({
+        nodes: [],
+        links: []
+    });
 
 
     useEffect(() => {
@@ -47,13 +42,9 @@ export const GraphDataProvider: React.FC<GraphDataProviderProps> = ({ updateChos
         fetchGraph()
         updateLastFetch()
     }, [])
-
-    // const graphRef = useRef<ForceGraphMethods<Node, Edge> | undefined>(); // passed to ForceGraph for reference
     
     const [fetchingNodesCount,setFetchingNodesCount] =  useState<number>(0);
 
-
-    // * sendMessage sends message to 
     const { sendMessage, lastMessage, readyState } = useWebSocket(SOCKET_URL);    
 
     useEffect(() => {

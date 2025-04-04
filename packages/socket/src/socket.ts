@@ -8,14 +8,11 @@ const wss = new WebSocketServer({ port: PORT });
 const connections: Map<UUID,WebSocket> = new Map(); // maintains websocket connections to be called to.
 const extraction_counts: Map<UUID,number> = new Map(); // maintains extraction_counts
 
-
-
 type Message = {type:"bfs",arxiv:string,depth:number}
 type UUID = string
 
 wss.on("connection", (ws: WebSocket,request) => {
     const id: UUID = v4()
-    console.log("Client Connected Declared as ", id)
     connections.set(id,ws)
 
   ws.on("message", (message: Buffer) => {
@@ -25,17 +22,12 @@ wss.on("connection", (ws: WebSocket,request) => {
   ws.on("close", () => handleClose(id));
 });
 
-console.log("WebSocket server running on ws://localhost:8080");
-
-
 
 // request handlers
-
 function handleMessage(message: Buffer,id:UUID) {
     const json: Message = JSON.parse(message.toString())
     if (json.type === "bfs")  handleBFSRequest(json.arxiv,json.depth,id)
 }   
-
 
 function handleBFSRequest(arxiv:string,depth:number,id:UUID) {
     if (!extraction_counts.has(id)) extraction_counts.set(id,0)
@@ -46,13 +38,11 @@ function handleBFSRequest(arxiv:string,depth:number,id:UUID) {
         (delta:number) => updateExtractionCountCallback(delta,id),
     )
 }
-
 // callbacks
 
 function onExtractionCallback(arxivIDs:string[],id:UUID) {
     // signals to client that given nodes have been updated and should be refresshed.
     const ws = connections.get(id)
-    console.log("Sending update out for", arxivIDs)
     arxivIDs.forEach((id:string) => {ws.send(JSON.stringify({type:"extract-notice", arxiv: id}))})
     broadcastUpdate(id)
 }
@@ -62,13 +52,10 @@ function updateExtractionCountCallback(delta:number, id:UUID) {
     const ws = connections.get(id)  
     const new_count = extraction_counts.get(id) + delta
     extraction_counts.set(id,new_count) 
-    console.log("Updating extraction count by ", delta)
     ws.send(JSON.stringify({type:"extract-count-update",extraction_count:new_count} as SocketMessage))
 }
 
-
 // server side handling.
-
 function broadcastUpdate(callerID: UUID) {
     // broadcast new nodes to be rendered to all users except the caller of BFS with callerID
     connections.forEach(function(ws,id) {if (id != callerID) ws.send(JSON.stringify({type:"update-signal"}))})
@@ -77,5 +64,4 @@ function broadcastUpdate(callerID: UUID) {
 function handleClose(id: string) {
     connections.delete(id)
     extraction_counts.delete(id)
-    console.log("Closed connection with ", id)
 }

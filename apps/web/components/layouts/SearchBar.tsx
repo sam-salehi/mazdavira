@@ -32,7 +32,7 @@ export function SearchInput({ onClick }:{onClick:()=>void}) {
             <Search className="text-gray-500 mr-2 cursor-pointer" onClick={handleSubmission}/>
             <Input
                 type="text"
-                placeholder="Enter Title"
+                placeholder="Search Database"
                 value={searchInput}
                 className="flex-1 pl-2 pr-4 py-2 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onChange={handleInputChange}
@@ -43,6 +43,8 @@ export function SearchInput({ onClick }:{onClick:()=>void}) {
         </>
     );
 }
+
+
 
 export function SearchSideBar({chosenPapers,setChosenPapers}:{chosenPapers:chosenPaper[], setChosenPapers:(s:any)=>void}) {
     const {searchResults,searchLoading} = useSearchContext()

@@ -18,7 +18,7 @@ export type chosenPaper = {
   extracted: boolean,
 };
 
-export const makeChosenPaper = function(gp: GenericPaper): chosenPaper { // TODO: move to neo config
+export const makeChosenPaper = function(gp: GenericPaper): chosenPaper {
   // conversts GenericPaper to chosenPaper for UI display handling difference between Paper and VaccuousPaper.
   const result: chosenPaper = {
     title:gp.title,

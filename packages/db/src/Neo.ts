@@ -49,7 +49,14 @@ export default class NeoAccessor {
                 result = await session.run(QUERY)
             }
             
-            result.records.forEach(rec => nodes.push({id:rec._fields[1], title:rec._fields[0], refCount: rec._fields[2], extracted: rec._fields[3],tokenization: rec._fields[4]}))
+            result.records.forEach(rec => nodes.push(
+                {
+                id: rec.get('arxiv'),
+                title: rec.get('title'),
+                refCount: rec.get('refCount'),
+                extracted: rec.get('extracted'),
+                tokenization: rec.get('tokenization')
+                }))
         } catch (error) {
             console.error("There was an issue fetching all nodes", error)
             throw error
@@ -73,7 +80,7 @@ export default class NeoAccessor {
             } else {
                 result = await session.run(QUERY)
             }
-            result.records.forEach(rec => edges.push({source: rec._fields[0], target:rec._fields[1]}))
+            result.records.forEach(rec => edges.push({source: rec.get('p.arxiv'), target:rec.get('n.arxiv')}))
         } catch (error) {
             console.error("There was in issue fetching all edges", error)
             throw error
@@ -90,7 +97,7 @@ export default class NeoAccessor {
         let nodePapers;
         try {
             const result = await session.run(QUERY, { title });
-            const nodes: FullPaper[] = result.records.map(record => record._fields[0].properties);
+            const nodes: FullPaper[] = result.records.map(record => record.get(0).properties);
             return nodes;
         } catch (error) {
             console.error("Could not fetch paper by title", error);
@@ -113,7 +120,7 @@ export default class NeoAccessor {
             const result = await session.run(QUERY,{arxiv:arxiv})
             if (result.records[0]) {
                 const nodePaper = QueryHelper.convertToPaper(result.records[0].get('p').properties)
-                const refCount = result.records[0]._fieldLookup?.refCount
+                const refCount = result.records[0].get("refCount")
                 return {paper:nodePaper,refCount:refCount}
             }
             throw new Error(`Paper with arxivID ${arxiv} was not found`)
@@ -350,7 +357,7 @@ class QueryHelper {
             {key:"tokenization",value:node.tokenization}
         ];
 
-        if (createDateTime) properties.push({key:"created_at", value: getPushTime()})  // FIXME: remove getPushTime from here
+        if (createDateTime) properties.push({key:"created_at", value: getPushTime()}) 
         return properties
     }
 

@@ -28,7 +28,6 @@ export default class FetchPipeline {
         } else {
             extractedPapers= await this.extractPaper(arxivID,paper_extracted_callback)
         }
-
         extractedPapers.forEach((paper:GenericPaper) =>this.extractPaperWithDepth(paper.arxiv,depth-1,paper_extracted_callback,extraction_count_callback)) // async
     }
 
@@ -103,7 +102,6 @@ export default class FetchPipeline {
             tokenization
         };
     }
-
 
     private static async fetchReferencePaperDetails(p: reference): Promise<VacuousPaper> {
         let paper : VacuousPaper;

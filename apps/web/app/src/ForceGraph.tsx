@@ -5,18 +5,18 @@ import {type GenericPaper } from "@repo/db/convert"
 import { chosenPaper, makeChosenPaper } from "../page";
 import { useGraphDataContext } from "./GraphDataContext";
 import ExtractionDisplay from "@/components/display/ExtractionDisplay";
-import { Node } from "@repo/db/convert";
 import { useSideBarContext } from "./SideBarContext";
 
+// type of node pased by Neo4j
 type GraphNode = {
     id: string;
     title: string;
     refCount: number;
     extracted: boolean;
-    tokenization?: number[];
-    x?: number;
-    y?: number;
-    z?: number;
+    tokenization: number[];
+    x: number;
+    y: number;
+    z: number;
 }
 
 type GraphLink = {
@@ -24,7 +24,13 @@ type GraphLink = {
     target: GraphNode;
 }
 
-// FIXME: move to display folder
+interface ForceGraphProps {
+  chosenPapers: chosenPaper[];
+  setChosenPapers: React.Dispatch<React.SetStateAction<chosenPaper[]>>;
+  openSideBar: () => void;
+  selectedPaper: string;
+  setSelectedPaper: (s: string) => void;
+}
 
 export default function ForceGraph({
   chosenPapers,
@@ -32,13 +38,7 @@ export default function ForceGraph({
   openSideBar,
   selectedPaper,
   setSelectedPaper,
-}: {
-  chosenPapers: chosenPaper[];
-  setChosenPapers: (chosen: chosenPaper[]) => void;
-  openSideBar: () => void;
-  selectedPaper: string;
-  setSelectedPaper: (s: string) => void;
-}) {
+}: ForceGraphProps) {
 
 
 
@@ -64,18 +64,18 @@ export default function ForceGraph({
   },[selectedPaper,graphData]) 
 
   useEffect(() => {
-    if (graphRef.current) {
-      graphRef.current.d3Force('link')
-        .distance(link => setLinkForce(link.source,link.target))
+    const force = graphRef.current?.d3Force('link');
+    if (force) {
+        force.distance((link:GraphLink) => setLinkForce(link.source,link.target));
     }
-  }, [graphData])
+  }, [graphData]);
 
 
   const minLength = 100 
   const maxLength = 5000
   const defaultLength = 1000
 
-  const setLinkForce = function(source:Node,target:Node):number {
+  const setLinkForce = function(source:GraphNode,target:GraphNode):number {
     if (!source.extracted || !target.extracted) return minLength
     if (!source.tokenization || !target.tokenization) return defaultLength
     const sim = cosineSim(source.tokenization,target.tokenization)
@@ -83,7 +83,7 @@ export default function ForceGraph({
   }
 
 
-  const zoomOntoNode = function (node: any) {
+  const zoomOntoNode = function (node: GraphNode) {
     const distance = 40;
     const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
 
@@ -96,12 +96,12 @@ export default function ForceGraph({
           }
         : { x: 0, y: 0, z: distance }; // special case if node is in (0,0,0)
 
-    graphRef.current.cameraPosition(newPos, node, 3000);
+    graphRef.current?.cameraPosition(newPos, node, 3000);
   };
 
 
 
-  const handleNodeClick = async function (node: any) {
+  const handleNodeClick = async function (node: GraphNode) {
     console.log(node)
     zoomOntoNode(node);
     if (chosenPapers.find((paper) => paper.arxiv === node.id)) return;
@@ -112,9 +112,7 @@ export default function ForceGraph({
     setSelectedPaper(paper.arxiv);
   };
 
-  const handleEdgeClick = async function ({ source, target }:{source:any,target:any}) {
-   
-    console.log(graphData.links.filter(l => ((l.source === source && l.target === target) || (l.source === target && l.target == source))))
+  const handleEdgeClick = async function ({ source, target }:{source:GraphNode,target:GraphNode}) {
     const [{paper:sourcePaper}, {paper:targetPaper}] = await Promise.all([
       NeoAccessor.getPaper(source.id),
       NeoAccessor.getPaper(target.id),
@@ -135,7 +133,7 @@ export default function ForceGraph({
     });
 };
 
-  const setNodeColor = function (node): string {
+  const setNodeColor = function (node:GraphNode): string {
     // add one for those being the neighbor of the selected Paper.
     if (node.id === selectedPaper) return "rgb(220,0,0,1)";
     if (selectedPapersNeighbors.has(node.id)) return "rgb(255,204,0,1)" 
@@ -143,7 +141,7 @@ export default function ForceGraph({
     return "rgba(0,255,255,0.6)";
 
   };
-  const setNodeSize = function (node): number {
+  const setNodeSize = function (node:GraphNode): number {
     return Math.trunc(5 * 20 ** (Math.min(50,node.refCount)/50))
   }
   return (
@@ -171,18 +169,24 @@ export default function ForceGraph({
 
 
 const cosineSim = function (A:number[], B:number[]):number {
-  if (A.length !== B.length) throw new Error(`Dimensions A: ${A.length} and B: ${B.length} do not match up`)
-  let dotproduct = 0;
-  let mA = 0;
-  let mB = 0;
+    if (A.length !== B.length) {
+        throw new Error(`Invalid dimensions A: ${A?.length}, B: ${B?.length}`);
+    }
+    let dotproduct = 0;
+    let mA = 0;
+    let mB = 0;
 
-  for(let i = 0; i < A.length; i++) {
-      dotproduct += A[i] * B[i];
-      mA += A[i] * A[i];
-      mB += B[i] * B[i];
-  }
-  mA = Math.sqrt(mA);
-  mB = Math.sqrt(mB);
-  const similarity = dotproduct / (mA * mB);
-  return similarity;
+    for(let i = 0; i < A.length; i++) {
+        if (!A[i] || !B[i]) throw new Error("Array can't be indexed")
+        dotproduct += safeAt(A,i) * safeAt(B,i);
+        mA += safeAt(A,i) * safeAt(B,i);
+        mB += safeAt(A,i) * safeAt(B,i);
+    }
+    mA = Math.sqrt(mA);
+    mB = Math.sqrt(mB);
+    return dotproduct / (mA * mB);
+}
+
+function safeAt(arr: number[], index: number): number {
+  return arr.at(index) || 0;
 }

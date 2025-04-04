@@ -43,7 +43,6 @@ export class PaperExtractor {
     }
 
     public static extractReferenceSection(pdfContent:string) : string {
-        // FIXME: modify to account for bibiliography as well
         // start with references section till end of line of last arxiv mention in the paper.
         const startingIndex = pdfContent.search(/references/i)
 

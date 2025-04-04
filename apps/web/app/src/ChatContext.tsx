@@ -177,7 +177,7 @@ export const ChatHistoryProvider: React.FC<{ children: ReactNode }> = ({
   };
 
 
-  let abortController: AbortController | null = null; // FIXME: abort controller doesn't work
+  let abortController: AbortController | null = null;
 
 
   const generateResponse = async function (prompt: string) {

@@ -1,0 +1,17 @@
+{
+        "extends": ["//"],
+    "tasks" : {
+        
+        "dev": {
+            "env": ["AI_*"]
+        },
+        "build": {
+            "env":["AI_*"]
+        }
+    },
+
+        "globalDependencies": [".env"]
+    
+
+
+}
