@@ -3,9 +3,8 @@ import { number, z } from 'zod';
 
 export const apiKey: string | undefined = process.env.AI_GOOGLE_GENERATIVE_AI_API_KEY || "AIzaSyBRfwiNmkhOlwcX94E5eQ96xMLF5asdH8s";
 if (!apiKey) throw new Error("Unable to load AI_API_KEY")
-console.log("Logging api key")
-console.log(apiKey)
 
+    
 export const geminiModel = createGoogleGenerativeAI({
     baseURL: "https://generativelanguage.googleapis.com/v1beta",
     apiKey: apiKey

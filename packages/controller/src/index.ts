@@ -19,11 +19,12 @@ import Tokenizer from "@repo/model/src/tokenizer.js"
 // today.setDate(today.getDate() - 1);
 // const yesterdayISOString = today.toISOString();
 const pdfLink = "http://arxiv.org/pdf/1706.03762v7"
+
+const paper = await FetchPipeline.extractPaperWithDepth("1706.03762",1)
 // const arxiv = PaperExtractor.extractReferenceSection(pdf)
 // console.log(arxiv)
-const nodes = await NeoAccessor.getPaper("1503.05034")
+// const nodes = await NeoAccessor.getPaper("1503.05034")
 
-console.log(nodes)
 
 
 

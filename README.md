@@ -15,5 +15,7 @@ Gaining an understanding of research litterature in a specific domain demands ti
 
 - Automated extraction and addition of further papers to the database through an automated extraction process using [AI-SDK](https://github.com/vercel/ai).
 
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GvGwtHkfB0U/0.jpg)](https://www.youtube.com/watch?v=GvGwtHkfB0U)
+
 # Setup:
 
