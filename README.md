@@ -13,11 +13,10 @@ Gaining an understanding of research litterature in a specific domain demands ti
 
 ![LLM](./images/llm2.png)
 
-- Automated extraction and addition of further papers to the database through an automated extraction process using [AI-SDK](https://github.com/vercel/ai).
+- [Automated extraction](https://www.youtube.com/watch?v=GvGwtHkfB0U) and addition of further papers to the database through an automated extraction process using [AI-SDK](https://github.com/vercel/ai).
 
 <!-- [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GvGwtHkfB0U/0.jpg)](https://www.youtube.com/watch?v=GvGwtHkfB0U) -->
 <a href="https://www.youtube.com/watch?v=GvGwtHkfB0U">
     <img src="./images/extraction.png" style="width:100%;" />
 </a>
-# Setup:
 
